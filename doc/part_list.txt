@@ -1,3 +1,21 @@
-1. (?) L298N
-2. (?) Raspberry Pi 4 Model B
-3. (?) HC-SR04
+1. Computer
+    (?) https://www.anodas.lt/raspberry-pi-4-model-b-wifi-dualband-bluetooth-4gb-ram-1-5ghz-897392760?sort=p.price&order=ASC
+
+2. Sensors
+    (?) ?x https://www.anodas.lt/hc-sr04-ultragarsinis-atstumo-matavimo-modulis?search=HC-SR0
+    (?) camera for object recognition
+
+3. Drivetrain components
+    (?) 2x https://www.anodas.lt/l9110s-h-bridge-varikliu-valdiklis?sort=p.price&order=ASC
+    (?) 4x  https://www.anodas.lt/dc-variklis-ratas?search=5v&page=5
+              
+4. Battery / power related components
+    (?) Some kind of a power switch
+    (?) https://www.anodas.lt/dc-dc-itampos-keitiklis-is-2-24v-i-2-28v-2a-step-up?sort=p.price&order=ASC (If we are going to use a power bank)
+    (?) Power bank with 5V 3A output 
+    (?) Resistors for connecting hc-sr04 sensor with raspberry pi
+        1x 220 OHMS
+        1x 470 OHMS
+
+5. Speaker
+    (?) Piezo beeper or a small speaker
