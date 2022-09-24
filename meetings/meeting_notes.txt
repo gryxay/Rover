@@ -1,1 +1,62 @@
 
+Week 1: 
+
+	1. When was the meeting? 
+
+		2022-09-13 (13:30 – 15:00) 
+
+	2. Who attended? 
+
+		All members of the group. 
+
+	3. What topics were discussed? 
+
+		1. Vision of our project. 
+	
+		2. Hardware. 
+
+	4. What was decided? 
+
+		1. Functionality. 
+
+		2. Preliminary hardware components. 
+
+	5. Is a follow-up meeting scheduled? If so, when? where? why? 
+
+		We are planning to have a meeting next week in the MIF faculty (Didlaukis) to make a parts list. 
+
+
+
+Week 2:  
+
+	1. When was the meeting? 
+
+		2022-09-21 (12:00 – 13:00) 
+
+	2. Who attended? 
+
+		All members of the group. 
+
+	3. What topics were discussed? 
+
+		1. Software. 
+
+		2. Hardware components. 
+
+	4. What was decided? 
+
+		1. We made a parts list for the robot. 
+	
+		2. We decided on the software we are going to use: 
+
+			1. For IDE’s are going to use VSCode / JetBrains Space. 
+
+			2. Raspberry Pi will run on Linux OS; 
+
+			3. Python is going to be used for programming.  
+
+			4. OpenCV libraries are probably going to be used for implementing computer vision. 
+
+	5. Is a follow-up meeting scheduled? If so, when? where? why? 
+
+		We are planning to meet up with our supervisor on 2022-09-22 during / after the PBL lecture in the MIF faculty (Didlaukis) and discuss the questions we have. 
