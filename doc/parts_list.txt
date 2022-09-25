@@ -1,0 +1,29 @@
+1. Computer
+    1x Raspberry Pi 4 model B (4GB RAM) https://www.anodas.lt/raspberry-pi-4-model-b-wifi-dualband-bluetooth-4gb-ram-1-5ghz-897392760?sort=p.price&order=ASC
+
+2. Sensors
+    4x HC-SR04 https://www.anodas.lt/hc-sr04-ultragarsinis-atstumo-matavimo-modulis?search=HC-SR0
+
+3. Drivetrain components
+    2x DRV8825 https://www.anodas.lt/drv8825-zingsniniu-varikliu-valdiklis?search=DRV8825
+    2x KS42STH40-1204A https://www.anodas.lt/zingsninis-variklis-nema17-ks42sth40-1204a-4kg-cm-0-4nm-1-2a-40mm?sort=p.price&order=ASCC
+              
+4. Battery / power related components
+    1x Power switch
+    1x Power bank (5V 3A output) https://www.anodas.lt/baseus-bipow-greito-ikrovimo-power-bank-pd-qc-10000mah-18w-baltas?sort=p.price&order=ASC
+    
+    4x 18650 Battery https://www.rcdalys.lt/detales/0/30605/Battery-18650CNP-2500mAh-20A-36V
+    1x 18650 Battery holder https://www.anodas.lt/elementu-laikiklis-skirtas-4-x-18650-baterijoms-serijinis-prijungimas?search=18650&sort=price&order=ASC&page=3
+    1x 18650 Battery charger https://intop.lt/lt/p/baterijos-1/1917385-18650-xtar-sc2-licio-jonu-cilindrinis-akum?utm_source=kaina24.lt&utm_medium=referral
+
+    4x resistor (1000ohm)
+    4x resistor (2000ohm)
+    2x capacitor (100 µF) https://www.anodas.lt/kondensatorius-100uf-16v-5x11mm?sort=p.price&order=ASC
+
+5. Speaker
+    1x Beeper https://www.anodas.lt/garsinis-signalizatorius-modulis-ky-012 
+
+6. Storage
+    1x 32GB microSD card https://www.anodas.lt/32-gb-uhs-i-goodram-microsd-atminties-kortele?sort=p.price&order=ASC
+
+*Will decide on a camera solution in the upcoming weeks.
