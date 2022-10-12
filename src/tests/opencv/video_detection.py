@@ -4,7 +4,7 @@ import cv2
 prototxt_path = 'models/MobileNetSSD_deploy.prototxt'
 model_path = 'models/MobileNetSSD_deploy.caffemodel'
 
-min_confidence = 0.2 # Can play around with
+min_confidence = 0.3 # Can play around with
 
 classes = [
     "background", "aeroplane", "bicycle", "bird", "boat",

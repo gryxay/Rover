@@ -15,10 +15,10 @@ delay = .0005
 
 try:
 	while True:
-	    GPIO.output(STEP, GPIO.HIGH)
-	    sleep(delay)
-	    GPIO.output(STEP, GPIO.LOW)
-	    sleep(delay)
+		GPIO.output(STEP, GPIO.HIGH)
+		sleep(delay)
+		GPIO.output(STEP, GPIO.LOW)
+		sleep(delay)
 
 except KeyboardInterrupt:
 	GPIO.cleanup()
