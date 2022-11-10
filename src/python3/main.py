@@ -1,43 +1,61 @@
 import RPi.GPIO as GPIO
 import time
+import threading
+from multiprocessing import Process, Value
+
 from motor import Motor
 from distance_sensor import Sensor
 from beeper import Beeper
+from drivetrain import Drivetrain
 
 
-motor_1 = Motor(15, 14)
-motor_2 = Motor(20, 16)
-
-sensor_1 = Sensor(7, 24)
-sensor_2 = Sensor(25, 8)
-sensor_3 = Sensor(12, 19)
-sensor_4 = Sensor(21, 26)
-
-beeper = Beeper(5)
+#beeper = Beeper(5)
+drivetrain = Drivetrain(20, 16, 26, 19)
+front_sensor = Sensor(21, 12)
+left_sensor = Sensor(25, 24)
+right_sensor = Sensor(17, 4)
 
 
-# Beeper test
+def update_sensor_data(front_sensor_last_scan, left_sensor_last_scan, right_sensor_last_scan):
+	while True:
+		front_sensor_last_scan.value = front_sensor.get_distance()
+		left_sensor_last_scan.value = left_sensor.get_distance()
+		right_sensor_last_scan.value = right_sensor.get_distance()
 
-beeper.beep(3, 0.1)
 
-# Motor test
+def drive(front_sensor_last_scan, left_sensor_last_scan, right_sensor_last_scan, is_moving):
+	while front_sensor_last_scan.value > 10.0 and left_sensor_last_scan.value > 5.0 and right_sensor_last_scan.value > 5.0:
+		drivetrain.rotate('f')
+	
+	if left_sensor_last_scan.value > right_sensor_last_scan.value:
+		drivetrain.turn('l', 2.85)
+	else:
+		drivetrain.turn('r', 2.85)
 
-motor_1.rotate(5, 1)
-motor_2.rotate(5, 1)
+	is_moving.value = 0
+	
 
-time.sleep(1)
+if __name__ == "__main__":
+	front_sensor_last_scan = Value('f', 11.0)
+	left_sensor_last_scan = Value('f', 7.0)
+	right_sensor_last_scan = Value('f', 7.0)
+	is_moving = Value('b', 1)
 
-motor_1.rotate(5, 0)
-motor_2.rotate(5, 0)
+	p1 = Process(target=update_sensor_data, args=(front_sensor_last_scan, left_sensor_last_scan, right_sensor_last_scan,))
+	p2 = Process(target=drive, args=(front_sensor_last_scan, left_sensor_last_scan, right_sensor_last_scan, is_moving,))
 
-# Distance sensor test
+	p1.start()
+	p2.start()
+	
+	while True:
+		if is_moving.value == 0:
+			p2 = Process(target=drive, args=(front_sensor_last_scan, left_sensor_last_scan, right_sensor_last_scan, is_moving,))
+			p2.start()
+			is_moving.value = 1
 
-for i in range(30):
-	print("Sensor_1: ", sensor_1.get_distance(), " cm")
-	print("Sensor_2: ", sensor_2.get_distance(), " cm")
-	print("Sensor_3: ", sensor_3.get_distance(), " cm")
-	print("Sensor_4: ", sensor_4.get_distance(), " cm")
-
-# Clear GPIO settings
-
-GPIO.cleanup()
+	"""
+	while True:
+		print("Left: ", left_sensor.get_distance())
+		print("Right: ", right_sensor.get_distance())
+		time.sleep(1)
+	"""
