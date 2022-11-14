@@ -39,7 +39,7 @@ class camThread(threading.Thread):
             rval, frame = self.cam.read()
         else:
             rval = False
-        return rval, frame.astype(cv2.CV_8UC1)
+        return rval, frame
 
 
 thread1 = camThread("Camera 1", 0)
@@ -54,22 +54,28 @@ class deapthMapWiever:
     def __init__(self, th1=None, th2=None):
         self.th1 = th1
         self.th2 = th2
+        self.stereo = cv2.StereoBM_create(numDisparities=16, blockSize=51)
     
     def _getPictures(self):
         rval1, frame1 = self.th1.getFrame()
         rval2, frame2 = self.th2.getFrame()
-        #print(frame1)
         if rval1 and rval2:
             return frame1, frame2
         print("Error: can't get pictures from cameras")
         Exception("Error: can't get pictures from cameras")
     
+    def pre_procesing(self, image):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = cv2.GaussianBlur(image, (51, 51), 2)
+        return image
+    
     def getDisparityMap(self):
         try:
             frame1, frame2 = self._getPictures()
-            #frame1 = cv2.      #CV_8UC1
-            stereo = cv2.StereoBM_create(numDisparities=16, blockSize=15)
-            disparity = stereo.compute(frame1, frame2)
+
+            frame1 = self.pre_procesing(frame1)
+            frame2 = self.pre_procesing(frame2)
+            disparity = self.stereo.compute(frame2, frame1)  # left, right [:, :, 0]
             return disparity
         except Exception as e:
             print(e)
@@ -82,8 +88,10 @@ class deapthMapWiever:
         cv2.namedWindow("Depth Map")
         print("Displaying depth map")
         while disparity is not None:
+            disparity = self.getDisparityMap()
+            disp = cv2.normalize(disparity, None, alpha=0, beta=255,
+                             norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
             cv2.imshow("Depth Map", disp)
-            print("Displaying depth map")
             key = cv2.waitKey(100)
             if key == 27:
                 break
