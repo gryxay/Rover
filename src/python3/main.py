@@ -28,9 +28,9 @@ def drive(front_sensor_last_scan, left_sensor_last_scan, right_sensor_last_scan,
 		drivetrain.rotate('f')
 	
 	if left_sensor_last_scan.value > right_sensor_last_scan.value:
-		drivetrain.turn('l', 3.15)
+		drivetrain.turn('l', 3.15)	# 3.15 ~= 90 degree turn
 	else:
-		drivetrain.turn('r', 3.15)
+		drivetrain.turn('r', 3.15)	# 3.15 ~= 90 degree turn
 
 	is_moving.value = 0
 	
