@@ -28,9 +28,9 @@ def drive(front_sensor_last_scan, left_sensor_last_scan, right_sensor_last_scan,
 		drivetrain.rotate('f')
 	
 	if left_sensor_last_scan.value > right_sensor_last_scan.value:
-		drivetrain.turn('l', 2.85)
+		drivetrain.turn('l', 3.15)
 	else:
-		drivetrain.turn('r', 2.85)
+		drivetrain.turn('r', 3.15)
 
 	is_moving.value = 0
 	
@@ -52,10 +52,3 @@ if __name__ == "__main__":
 			p2 = Process(target=drive, args=(front_sensor_last_scan, left_sensor_last_scan, right_sensor_last_scan, is_moving,))
 			p2.start()
 			is_moving.value = 1
-
-	"""
-	while True:
-		print("Left: ", left_sensor.get_distance())
-		print("Right: ", right_sensor.get_distance())
-		time.sleep(1)
-	"""

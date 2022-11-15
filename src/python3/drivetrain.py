@@ -4,7 +4,7 @@ import RPi.GPIO as GPIO
 
 SPR = 800       		# Signal pulses Per Revolution
 DRIVING_DELAY = 0.0002	# Time between signal pulses when driving
-TURNING_DELAY = 0.0002	# Time between signal pulses when turning
+TURNING_DELAY = 0.0005	# Time between signal pulses when turning
 
 
 class Drivetrain:
