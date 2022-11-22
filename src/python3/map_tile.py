@@ -40,8 +40,8 @@ class map:
 
     def add_tile(self, x, y, unknown=True, start=False, visited=False, obstacle=False, end=False) -> bool:
         key = str(x) + str(y)
-        if key in self.map:
-            return False
+        # if key in self.map:
+        #     return False      pretty sure we dont need this since tiles are updated
         self.__update_bounds(x, y)
         self.map[key] = map_tile(x, y, unknown, start, visited, obstacle, end)
         return True
