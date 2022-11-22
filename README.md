@@ -1,1 +1,1 @@
-#TODO
+An autonomous robot companion, with the ability to detect and avoid objects, execute given tasks and alert the user.​
