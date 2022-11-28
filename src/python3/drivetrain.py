@@ -9,11 +9,11 @@ TURNING_DELAY = 0.0005	# Time between signal pulses when turning
 
 class Drivetrain:
 	def __init__(self, dir_pin_1, step_pin_1, dir_pin_2, step_pin_2, sleep_pin):
-		# Motor 1
+		# Left motor
 		self.dir_pin_1 = dir_pin_1
 		self.step_pin_1 = step_pin_1
 
-		# Motor 2
+		# Right motor
 		self.dir_pin_2 = dir_pin_2
 		self.step_pin_2 = step_pin_2
 
