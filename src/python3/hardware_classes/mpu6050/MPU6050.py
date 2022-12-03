@@ -836,7 +836,8 @@ class MPU6050:
         rad_ypr = self.DMP_get_roll_pitch_yaw(a_quat, a_grav_vect)
         roll = rad_ypr.x * (180.0/math.pi)
         pitch = rad_ypr.y * (180.0/math.pi)
-        yaw = rad_ypr.z * (180.0/math.pi)
+        yaw = rad_ypr.z * (360.0 / math.pi) + 180.0
+        # yaw = rad_ypr.z * (180.0/math.pi)
         return V(roll, pitch, yaw)
 
     def DMP_get_linear_accel(self, a_vector_raw, a_vect_grav):
