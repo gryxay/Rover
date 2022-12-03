@@ -1,8 +1,10 @@
 import RPi.GPIO as GPIO
 import time
 
+
 DELAY = 0.1 			# Seconds
 SIGNAL_LENGTH = 0.00001 # Seconds
+
 
 class Sensor:
 	def __init__(self, trig_pin, echo_pin):
