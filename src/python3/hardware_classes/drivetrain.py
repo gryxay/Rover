@@ -2,18 +2,27 @@ import time
 import RPi.GPIO as GPIO
 
 
+LEFT_MOTOR_DIR_PIN = 16
+LEFT_MOTOR_STEP_PIN = 20
+
+RIGHT_MOTOR_DIR_PIN = 19
+RIGHT_MOTOR_STEP_PIN = 26
+
+SLEEP_PIN = 21
+
 SPR = 800       		# Signal pulses Per Revolution
 DRIVING_DELAY = 0.0002	# Time between signal pulses when driving
-TURNING_DELAY = 0.0005	# Time between signal pulses when turning
+TURNING_DELAY = 0.001	# Time between signal pulses when turning
 
 
 class Drivetrain:
-	def __init__(self, dir_pin_1, step_pin_1, dir_pin_2, step_pin_2, sleep_pin):
-		# Left motor
+	def __init__(self, dir_pin_1 = LEFT_MOTOR_DIR_PIN, step_pin_1 = LEFT_MOTOR_STEP_PIN, \
+					dir_pin_2 = RIGHT_MOTOR_DIR_PIN, step_pin_2 = RIGHT_MOTOR_STEP_PIN, sleep_pin = SLEEP_PIN):
+		# Motor 1
 		self.dir_pin_1 = dir_pin_1
 		self.step_pin_1 = step_pin_1
 
-		# Right motor
+		# Motor 2
 		self.dir_pin_2 = dir_pin_2
 		self.step_pin_2 = step_pin_2
 
