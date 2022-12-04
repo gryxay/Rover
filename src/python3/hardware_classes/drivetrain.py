@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 from multiprocessing import Process, Value
 from time import sleep
-from math import floor
+from math import floor, ceil
 
 from MPU6050 import MPU6050
 
@@ -27,6 +27,7 @@ Z_ACCEL_OFFSET = -396
 X_GYRO_OFFSET = -58
 Y_GYRO_OFFSET = 72
 Z_GYRO_OFFSET = -23
+
 ENABLE_DEBUG_OUTPUT = False
 
 
@@ -61,6 +62,7 @@ class Drivetrain:
 		Process(target = self.update_yaw_data, args = (self.yaw,)).start()
 
 		# Wait for yaw data to stabilize
+		print("Setting up the positioning system...")
 		sleep(20)
 
 
@@ -100,17 +102,17 @@ class Drivetrain:
 			
 			sleep(DRIVING_DELAY)
 
-	# In development / testing stage
+
 	# Works for turns up to 360 degrees
 	def turn(self, direction, degrees):
-		offset = (degrees % 360.0) / 60
+		turning_offset = (degrees % 360.0) / 60
 
 		if direction == 'l':
 			GPIO.output(self.dir_pin_1, GPIO.LOW)
 			GPIO.output(self.dir_pin_2, GPIO.HIGH)
 
 			final_orientation = self.yaw.value - degrees % 360.0
-			offset *= -1
+			turning_offset *= -1
 
 			if final_orientation < 0:
 				final_orientation = 360.0 + final_orientation
@@ -121,7 +123,7 @@ class Drivetrain:
 
 			final_orientation = (self.yaw.value + degrees % 360.0) % 360.0
 
-		while floor(self.yaw.value) != floor(final_orientation - offset):
+		while floor(self.yaw.value) != floor(final_orientation - turning_offset):
 			GPIO.output(self.step_pin_1, GPIO.HIGH)
 			GPIO.output(self.step_pin_2, GPIO.HIGH)
 
