@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 from multiprocessing import Process, Value
 from time import sleep
-from math import floor, ceil
+from math import floor
 
 from MPU6050 import MPU6050
 
