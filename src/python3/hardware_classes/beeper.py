@@ -9,6 +9,10 @@ class Beeper:
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(self.trig_pin, GPIO.OUT)
 
+		# Prevent constant beeping after initialization
+		GPIO.output(self.trig_pin, GPIO.HIGH)
+
+
 	def beep(self, count, delay):
 		for i in range(count):
 			GPIO.output(self.trig_pin, GPIO.LOW)
