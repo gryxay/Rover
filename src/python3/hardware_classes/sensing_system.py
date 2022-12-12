@@ -1,3 +1,4 @@
+from multiprocessing import Process, Value
 from distance_sensor import Distance_sensor
 
 
@@ -24,18 +25,43 @@ class Sensing_system:
         self.left_sensor = Distance_sensor(left_sensor_trig_pin, left_sensor_echo_pin)
         self.right_sensor = Distance_sensor(right_sensor_trig_pin, right_sensor_echo_pin)
 
+        self.front_sensor_last_scan = Value('f', 0.0)
+        self.rear_sensor_last_scan = Value('f', 0.0)
+        self.left_sensor_last_scan = Value('f', 0.0)
+        self.right_sensor_last_scan = Value('f', 0.0)
+
+        # Start a process, that constantly updates distance sensor in the background
+        Process(target = self.update_sensor_data).start()
+
+
+    def update_sensor_data(self):
+        while True:
+            self.front_sensor_last_scan.value = self.front_sensor.get_distance()
+            self.rear_sensor_last_scan.value = self.rear_sensor.get_distance()
+            self.left_sensor_last_scan.value = self.left_sensor.get_distance()
+            self.right_sensor_last_scan.value = self.right_sensor.get_distance()
+
+
+    def get_sensor_data(self):
+        return {
+            "front": self.front_sensor_last_scan.value,
+            "rear": self.rear_sensor_last_scan.value,
+            "left": self.left_sensor_last_scan.value,
+            "right": self.right_sensor_last_scan.value
+	    }
+
 
     def get_front_sensor_distance(self):
-        return self.front_sensor.get_distance()
+        return self.front_sensor_last_scan.value
 
 
     def get_rear_sensor_distance(self):
-        return self.rear_sensor.get_distance()
+        return self.rear_sensor_last_scan.value
 
 
     def get_left_sensor_distance(self):
-        return self.left_sensor.get_distance()
+        return self.left_sensor_last_scan.value
 
 
     def get_right_sensor_distance(self):
-        return self.right_sensor.get_distance()
+        return self.right_sensor_last_scan.value
