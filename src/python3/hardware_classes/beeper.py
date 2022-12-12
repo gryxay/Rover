@@ -2,8 +2,11 @@ import RPi.GPIO as GPIO
 import time
 
 
+TRIG_PIN = 5
+
+
 class Beeper:
-	def __init__(self, trig_pin):
+	def __init__(self, trig_pin = TRIG_PIN):
 		self.trig_pin = trig_pin
 
 		GPIO.setmode(GPIO.BCM)
