@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 from multiprocessing import Process, Value
 from time import sleep
-from math import floor
+from math import floor, ceil
 
 from MPU6050 import MPU6050
 
@@ -14,7 +14,7 @@ RIGHT_MOTOR_STEP_PIN = 26
 SLEEP_PIN = 21
 
 SPR = 800       		# Signal pulses Per Revolution
-DRIVING_DELAY = 0.0002	# Time between signal pulses when driving
+DRIVING_DELAY = 0.0001	# Time between signal pulses when driving
 TURNING_DELAY = 0.0005	# Time between signal pulses when turning
 
 # MPU6050 constants
@@ -34,11 +34,11 @@ ENABLE_DEBUG_OUTPUT = False
 class Drivetrain:
 	def __init__(self, dir_pin_1 = LEFT_MOTOR_DIR_PIN, step_pin_1 = LEFT_MOTOR_STEP_PIN, \
 					dir_pin_2 = RIGHT_MOTOR_DIR_PIN, step_pin_2 = RIGHT_MOTOR_STEP_PIN, sleep_pin = SLEEP_PIN):
-		# Motor 1
+		# Left motor setup
 		self.dir_pin_1 = dir_pin_1
 		self.step_pin_1 = step_pin_1
 
-		# Motor 2
+		# Right motor setup
 		self.dir_pin_2 = dir_pin_2
 		self.step_pin_2 = step_pin_2
 
@@ -55,11 +55,17 @@ class Drivetrain:
 		GPIO.setup(self.step_pin_2, GPIO.OUT)
 		GPIO.setup(self.sleep_pin, GPIO.OUT)
 
+		# Accelerometer / gyroscope setup
+		self.mpu = MPU6050(I2C_BUS, DEVICE_ADDRESS, X_ACCEL_OFFSET, Y_ACCEL_OFFSET, Z_ACCEL_OFFSET, \
+						X_GYRO_OFFSET, Y_GYRO_OFFSET, Z_GYRO_OFFSET, ENABLE_DEBUG_OUTPUT)
+		self.mpu.dmp_initialize()
+		self.mpu.set_DMP_enabled(True)
+
 		# Rotation around z axis in degrees
 		self.yaw = Value('f', 0.0)
 		
 		# Start a process, that constantly updates yaw data in the background
-		Process(target = self.update_yaw_data, args = (self.yaw,)).start()
+		Process(target = self.update_yaw_data).start()
 
 		# Wait for yaw data to stabilize
 		print("Setting up the positioning system...")
@@ -139,33 +145,28 @@ class Drivetrain:
 		GPIO.output(self.sleep_pin, is_on)
 
 
-	def update_yaw_data(self, yaw):
-		mpu = MPU6050(I2C_BUS, DEVICE_ADDRESS, X_ACCEL_OFFSET, Y_ACCEL_OFFSET, Z_ACCEL_OFFSET, \
-						X_GYRO_OFFSET, Y_GYRO_OFFSET, Z_GYRO_OFFSET, ENABLE_DEBUG_OUTPUT)
-		mpu.dmp_initialize()
-		mpu.set_DMP_enabled(True)
-
-		mpu_int_status = mpu.get_int_status()
-		packet_size = mpu.DMP_get_FIFO_packet_size()
-		FIFO_count = mpu.get_FIFO_count()
+	def update_yaw_data(self):
+		mpu_int_status = self.mpu.get_int_status()
+		packet_size = self.mpu.DMP_get_FIFO_packet_size()
+		FIFO_count = self.mpu.get_FIFO_count()
 		FIFO_buffer = [0]*64
 		FIFO_count_list = list()
 
 		while True:
-			FIFO_count = mpu.get_FIFO_count()
-			mpu_int_status = mpu.get_int_status()
+			FIFO_count = self.mpu.get_FIFO_count()
+			mpu_int_status = self.mpu.get_int_status()
 
 			# If overflow is detected by status or fifo count we want to reset
 			if (FIFO_count == 1024) or (mpu_int_status & 0x10):
-				mpu.reset_FIFO()
+				self.mpu.reset_FIFO()
 			# Check if fifo data is ready
 			elif (mpu_int_status & 0x02):
 				while FIFO_count < packet_size:
-					FIFO_count = mpu.get_FIFO_count()
+					FIFO_count = self.mpu.get_FIFO_count()
 
-				FIFO_buffer = mpu.get_FIFO_bytes(packet_size)
-				accel = mpu.DMP_get_acceleration_int16(FIFO_buffer)
-				quat = mpu.DMP_get_quaternion_int16(FIFO_buffer)
-				grav = mpu.DMP_get_gravity(quat)
+				FIFO_buffer = self.mpu.get_FIFO_bytes(packet_size)
+				accel = self.mpu.DMP_get_acceleration_int16(FIFO_buffer)
+				quat = self.mpu.DMP_get_quaternion_int16(FIFO_buffer)
+				grav = self.mpu.DMP_get_gravity(quat)
 
-				yaw.value = mpu.DMP_get_euler_roll_pitch_yaw(quat, grav).z
+				self.yaw.value = self.mpu.DMP_get_euler_roll_pitch_yaw(quat, grav).z
