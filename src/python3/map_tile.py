@@ -71,8 +71,8 @@ class map:
             self.print_tile_info(tile)
     
     def display_map(self) -> None:
-        for x in range(self.bounds[0], self.bounds[1] + 1)[::-1]:
-            for y in range(self.bounds[2], self.bounds[3] + 1):
+        for y in range(self.bounds[2], self.bounds[3] + 1)[::-1]:
+            for x in range(self.bounds[0], self.bounds[1] + 1):
                 self.display_tile(x, y)
             print()
 
