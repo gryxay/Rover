@@ -12,7 +12,7 @@ from map_tile import Map
 TILE_SIZE = 6 # 6 x 6 cm
 CM = 132 # 132 motor steps = 1cm
 VISION_RANGE = 3 # tiles in front of the robot
-
+EMERGENCY_STOP_DISTANCE = 10 # cm
 
 beeper = Beeper()
 drivetrain = Drivetrain()
@@ -69,9 +69,12 @@ class explore_logic:
     
 
     def can_move_forward(self):
-        if sensing_system.get_front_sensor_distance() < 10:
+        if sensing_system.get_front_sensor_distance() < EMERGENCY_STOP_DISTANCE:
             return False
-
+        elif sensing_system.get_left_sensor_distance() < EMERGENCY_STOP_DISTANCE:
+            return False
+        elif sensing_system.get_right_sensor_distance() < EMERGENCY_STOP_DISTANCE:
+            return False
         return True
 
 
@@ -115,16 +118,14 @@ class explore_logic:
 
     def is_facing_wall(self):
         if self.orientation == 'N':
-            return map.get_tile(self.map.cur_x, self.map.cur_y + 1).is_obstacle
-
+            return map.get_tile(self.map.cur_x, self.map.cur_y + 1).is_obstacle or map.get_tile(self.map.cur_x + 1, self.map.cur_y + 1).is_obstacle or map.get_tile(self.map.cur_x - 1, self.map.cur_y + 1).is_obstacle
         elif self.orientation == 'E':
-            return map.get_tile(self.map.cur_x + 1, self.map.cur_y).is_obstacle
-
+            return map.get_tile(self.map.cur_x + 1, self.map.cur_y).is_obstacle or map.get_tile(self.map.cur_x + 1, self.map.cur_y + 1).is_obstacle or map.get_tile(self.map.cur_x + 1, self.map.cur_y - 1).is_obstacle
         elif self.orientation == 'S':
-            return map.get_tile(self.map.cur_x, self.map.cur_y - 1).is_obstacle
-
+            return map.get_tile(self.map.cur_x, self.map.cur_y - 1).is_obstacle or map.get_tile(self.map.cur_x + 1, self.map.cur_y - 1).is_obstacle or map.get_tile(self.map.cur_x - 1, self.map.cur_y - 1).is_obstacle
         elif self.orientation == 'W':
-            return map.get_tile(self.map.cur_x - 1, self.map.cur_y).is_obstacle
+            return map.get_tile(self.map.cur_x - 1, self.map.cur_y).is_obstacle or map.get_tile(self.map.cur_x - 1, self.map.cur_y + 1).is_obstacle or map.get_tile(self.map.cur_x - 1, self.map.cur_y - 1).is_obstacle
+    
     
 
     def is_wall_on_left(self):
