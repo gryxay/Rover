@@ -45,8 +45,8 @@ class map:
 
     def add_tile(self, x, y, unknown=False, start=False, visited=False, obstacle=False, end=False) -> bool:
         key = str(x) + str(y)
-        if key in self.map:
-            return False
+        #if key in self.map:
+        #    return False
         self.__update_bounds(x, y)
         if start:
             self.start = [x, y]
