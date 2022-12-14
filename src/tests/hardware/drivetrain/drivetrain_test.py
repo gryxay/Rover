@@ -1,50 +1,27 @@
-import time
+from time import sleep
+
 from drivetrain import Drivetrain
 
 
-cm = 132 # It takes 132 motor steps to move 1 cm 
-degrees_90 = 3.15 # It takes 3.15 rotations for both motors (turning in the opposite directions) to turn 90 degrees
+CM = 132 # It takes 132 motor steps to move 1 cm 
 
 
-drivetrain = Drivetrain(20, 16, 26, 19, 13)
-
-
-def precision_test():
-    while True:
-        # Drives 1 cm forwards
-        for i in range(cm):
-            drivetrain.rotate('f') 
-
-        time.sleep(1)
-
-        # Drives 1 cm backwards
-        for i in range(cm):
-            drivetrain.rotate('b')
-
-        time.sleep(1)
-
-        # Drives 2 cm forwards
-        for i in range(2 * cm):
-            drivetrain.rotate('f')
-
-        time.sleep(1)
-
-        # Drives 2 cm backwards
-        for i in range(2 * cm):
-            drivetrain.rotate('b')	
-
-        time.sleep(1)
-
-
-def power_toggle_test():
-    drivetrain.toggle_power(True)
-    time.sleep(3)
-    drivetrain.toggle_power(False)
+drivetrain = Drivetrain()
 
 
 if __name__ == "__main__":
-    #drivetrain.turn('r', degrees_90)
+    # Turn on the motor controllers
+    drivetrain.toggle_power(True)
 
-    #precision_test()
+    # Drive 50cm forwards
+    for pulse in range(50 * CM):
+        drivetrain.rotate('f')
 
-    power_toggle_test()
+    sleep(2)
+
+    # Drive 50cm backwards
+    for pulse in range(50 * CM):
+        drivetrain.rotate('b')
+
+    # Turn off the motor controllers
+    drivetrain.toggle_power(False)
