@@ -6,10 +6,11 @@ TRIG_PIN = 5
 
 
 class Beeper:
-	def __init__(self, trig_pin = TRIG_PIN):
+	def __init__(self, trig_pin = TRIG_PIN, debug = False):
 		self.trig_pin = trig_pin
 
 		GPIO.setmode(GPIO.BCM)
+		GPIO.setwarnings(debug)
 		GPIO.setup(self.trig_pin, GPIO.OUT)
 
 		# Prevent constant beeping after initialization
