@@ -20,7 +20,7 @@ sensing_system = Sensing_system()
 def explore_v1(map):
     while True:
         if sensing_system.get_front_sensor_distance() > 10.0:
-            # If 33cm in front is free, 33/5 = 6 tiles of free non-obstacle tiles are added to map (theoretically). - Aistė
+            # If 33cm in front is free, 33/5 ≈ 6 tiles of free non-obstacle tiles are added to map. - Aistė
             for x in range(math.floor(sensing_system.get_front_sensor_distance() / 5.0)):
                 map.add_tile(map.cur_x, map.cur_y + x + 1, unknown = False)
         
