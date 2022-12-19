@@ -9,19 +9,31 @@ class Map:
         self.map = {}
         self.start = [self.cur_x, self.cur_y]
         self.end = [None, None]
-        self.map[str(self.cur_x) + str(self.cur_y)] = Map_tile(self.cur_x, self.cur_y, start=True)
+        self.map[str(self.cur_x) + "," + str(self.cur_y)] = Map_tile(self.cur_x, self.cur_y, start=True)
         
     
     def get_current_tile(self) -> Map_tile:
-        return self.map[str(self.cur_x) + str(self.cur_y)]
+        return self.map[str(self.cur_x) + "," + str(self.cur_y)]
     
 
     def get_tile(self, x, y) -> Map_tile:
-        return self.map[str(x) + str(y)]
+        key = str(x) + "," + str(y)
+
+        if key in self.map:
+            return self.map[key]
+
+        return None
+
+
+    def is_obstacle(self, x, y):
+        if self.map[str(x) + "," + str(y)] == None:
+            return False
+
+        return self.map[str(x) + "," + str(y)].is_obstacle
 
 
     def add_tile(self, x, y, unknown=False, start=False, visited=False, obstacle=False, end=False) -> bool:
-        key = str(x) + str(y)
+        key = str(x) + "," + str(y)
         self.__update_bounds(x, y)
 
         if start:
@@ -67,8 +79,8 @@ class Map:
         if x == self.cur_x and y == self.cur_y:
             print("X", end="")
 
-        elif str(x) + str(y) in self.map:
-            tile = self.map[str(x) + str(y)]
+        elif str(x) + "," + str(y) in self.map:
+            tile = self.map[str(x) + "," + str(y)]
 
             if tile is not None:
                 if tile.is_obstacle:
@@ -99,17 +111,17 @@ class Map:
     def get_neighbours(self, tile) -> list:
         neighbours = []
 
-        if str(tile.x) + str(tile.y + 1) in self.map:
-            neighbours.append(self.map[str(tile.x) + str(tile.y + 1)])
+        if str(tile.x) + "," + str(tile.y + 1) in self.map:
+            neighbours.append(self.map[str(tile.x) + "," + str(tile.y + 1)])
 
-        if str(tile.x) + str(tile.y - 1) in self.map:
-            neighbours.append(self.map[str(tile.x) + str(tile.y - 1)])
+        if str(tile.x) + "," + str(tile.y - 1) in self.map:
+            neighbours.append(self.map[str(tile.x) + "," + str(tile.y - 1)])
 
-        if str(tile.x + 1) + str(tile.y) in self.map:
-            neighbours.append(self.map[str(tile.x + 1) + str(tile.y)])
+        if str(tile.x + 1) + "," + str(tile.y) in self.map:
+            neighbours.append(self.map[str(tile.x + 1) + "," + str(tile.y)])
 
-        if str(tile.x - 1) + str(tile.y) in self.map:
-            neighbours.append(self.map[str(tile.x - 1) + str(tile.y)])
+        if str(tile.x - 1) + "," + str(tile.y) in self.map:
+            neighbours.append(self.map[str(tile.x - 1) + "," + str(tile.y)])
 
         return neighbours
 
@@ -122,7 +134,7 @@ class Map:
                 continue
 
             elif neighbours[i].distance is None or neighbours[i].distance > n + 1:
-                self.map[str(neighbours[i].x) + str(neighbours[i].y)].distance = n + 1
+                self.map[str(neighbours[i].x) + "," + str(neighbours[i].y)].distance = n + 1
                 neighbours[i].distance = n + 1
 
                 if neighbours[i].is_end:
@@ -156,8 +168,8 @@ class Map:
         if self.start[0] is None or self.end[0] is None:
             return path
 
-        start_tile = self.map[str(self.start[0]) + str(self.start[1])]
-        end_tile = self.map[str(self.end[0]) + str(self.end[1])]
+        start_tile = self.map[str(self.start[0]) + "," + str(self.start[1])]
+        end_tile = self.map[str(self.end[0]) + "," + str(self.end[1])]
         start_tile.distance = 0
         self.__calculate_distances(start_tile)
 
