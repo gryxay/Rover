@@ -3,8 +3,11 @@ from multiprocessing import Process, Value
 from distance_sensor import Distance_sensor
 
 
-FRONT_MIN_DISTANCE = 10 
-BACK_MIN_DISTANCE = 10
+MIN_FRONT_DISTANCE = 10 
+MIN_LEFT_DISTANCE = 15
+MIN_RIGHT_DISTANCE = 15
+
+MIN_BACK_DISTANCE = 10
 
 
 FRONT_SENSOR_TRIG_PIN = 24
@@ -73,16 +76,24 @@ class Sensing_system:
 
 
     def is_front_clear(self):
-        if self.__front_sensor_last_scan.value > FRONT_MIN_DISTANCE and \
-            self.__left_sensor_last_scan.value > FRONT_MIN_DISTANCE and \
-                self.__right_sensor_last_scan.value > FRONT_MIN_DISTANCE:
+        if self.__front_sensor_last_scan.value > MIN_FRONT_DISTANCE and \
+            self.__left_sensor_last_scan.value > MIN_LEFT_DISTANCE and \
+                self.__right_sensor_last_scan.value > MIN_RIGHT_DISTANCE:
             return True 
         
         return False
 
 
     def is_back_clear(self):
-        if self.__rear_sensor_last_scan.value > BACK_MIN_DISTANCE:
+        if self.__rear_sensor_last_scan.value > MIN_BACK_DISTANCE:
             return True
         
         return False
+
+
+# For testing purposes
+if __name__ == "__main__":
+    sensing_system = Sensing_system()
+
+    while True:
+        print(sensing_system.get_sensor_data())
