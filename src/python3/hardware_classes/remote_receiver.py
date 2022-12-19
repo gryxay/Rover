@@ -83,7 +83,7 @@ class IR_Receiver:
             reading = self.__receiver.read_one()
 
             if reading:
-                if reading.value == START_KEY and reading.value != last_reading:
+                if reading.value == START_KEY and self.__start_button_pressed.value != 1:
                     self.__start_button_pressed.value = 1
 
                     last_reading = START_KEY
@@ -94,7 +94,7 @@ class IR_Receiver:
                     if self.__debug:
                         print("Receiver: Start button has been pressed")
 
-                elif reading.value == STOP_KEY and reading.value != last_reading:
+                elif reading.value == STOP_KEY and self.__start_button_pressed.value != 0:
                     self.__start_button_pressed.value = 0
 
                     last_reading = STOP_KEY
