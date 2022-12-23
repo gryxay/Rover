@@ -26,7 +26,9 @@ class Map:
 
 
     def is_obstacle(self, x, y):
-        if self.map[str(x) + "," + str(y)] == None:
+        key = str(x) + "," + str(y)
+
+        if not key in self.map:
             return False
 
         return self.map[str(x) + "," + str(y)].is_obstacle
