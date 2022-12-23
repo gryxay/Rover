@@ -2,9 +2,7 @@ from drivetrain import Drivetrain
 from sensing_system import Sensing_system
 from remote_receiver import IR_Receiver
 from beeper import Beeper
-
 from map import Map
-
 from time import sleep
 import math
 
@@ -17,13 +15,13 @@ EMERGENCY_STOP_DISTANCE = 10 # cm
 
 # In development
 class Robot():
-    def __init__(self, debug = False, sound_signals = True):
+    def __init__(self, imu_auto_calibrate = True, sound_signals = True, debug = False):
         self.__sound_signals = sound_signals
         self.__debug = debug
 
-        self.__drivetrain = Drivetrain(debug = debug)
+        self.__drivetrain = Drivetrain(imu_auto_calibrate = imu_auto_calibrate, debug = debug)
         self.__sensing_system = Sensing_system()
-        self.__remote_receiver = IR_Receiver(debug = debug, sound_signals = sound_signals)
+        self.__remote_receiver = IR_Receiver(sound_signals = sound_signals, debug = debug)
         self.__beeper = Beeper()
 
         self.__map = Map()
@@ -44,7 +42,7 @@ class Robot():
 
         while True:
             if self.__remote_receiver.is_start_button_pressed():
-                if self.__remote_receiver.get_mode() == "AI mode":
+                if self.__remote_receiver.get_mode() == "Autonomous mode":
                     command = self.__remote_receiver.get_command()
 
                     if command == "Explore":
@@ -58,7 +56,7 @@ class Robot():
                         # TODO
                         print("Return to home")
 
-                elif self.__remote_receiver.get_mode() == "Semi-manual mode":
+                elif self.__remote_receiver.get_mode() == "Manual mode":
                     self.__manual_mode()
 
        
@@ -67,7 +65,7 @@ class Robot():
         while self.__remote_receiver.is_start_button_pressed():
             # add tiles to map
             self.__update_map()
-            self.__map.display_map()
+            #self.__map.display_map()
 
             # check if front is free
             if not self.__is_facing_obstacle() and self.__sensing_system.is_front_clear():
@@ -341,29 +339,28 @@ class Robot():
 
     #----------------------------------------
     def __manual_mode(self):
-        while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Semi-manual mode":
-            if self.__remote_receiver.get_last_command() == "Forward":
-                if not self.__sensing_system.is_front_clear():
-                    self.__remote_receiver.reset_last_command()
-
-                while self.__sensing_system.is_front_clear() and self.__remote_receiver.get_last_command() == "Forward":
+        while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Manual mode":
+            if self.__remote_receiver.get_last_key_press() == "Forward":
+                while self.__sensing_system.is_front_clear() and self.__remote_receiver.get_last_key_press() == "Forward":
                     self.__drivetrain.rotate('f')
 
-            elif self.__remote_receiver.get_last_command() == "Backward":
-                if not self.__sensing_system.is_back_clear():
-                    self.__remote_receiver.reset_last_command()
+                self.__remote_receiver.reset_last_key_press()
 
-                while self.__sensing_system.is_back_clear() and self.__remote_receiver.get_last_command() == "Backward":
+            elif self.__remote_receiver.get_last_key_press() == "Backward":
+                while self.__sensing_system.is_back_clear() and self.__remote_receiver.get_last_key_press() == "Backward":
                     self.__drivetrain.rotate('b')
 
-            elif self.__remote_receiver.get_last_command() == "Left":
-                self.__drivetrain.turn('l', 90)
-                self.__remote_receiver.reset_last_command()
+                self.__remote_receiver.reset_last_key_press()
 
-            elif self.__remote_receiver.get_last_command() == "Right":
-                self.__drivetrain.turn('r', 90)
-                self.__remote_receiver.reset_last_command()
+            elif self.__remote_receiver.get_last_key_press() == "Left":
+                self.__turn_left()
+                self.__remote_receiver.reset_last_key_press()
+
+            elif self.__remote_receiver.get_last_key_press() == "Right":
+                self.__turn_right()
+                self.__remote_receiver.reset_last_key_press()
 
 
 if __name__ == "__main__":
-    robot = Robot(debug = True, sound_signals = True)
+    robot = Robot(imu_auto_calibrate = True, sound_signals = False, debug = True)
+    
