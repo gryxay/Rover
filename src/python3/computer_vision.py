@@ -29,7 +29,7 @@ class Computer_vision:
         
         self.__net = net = cv2.dnn.readNetFromCaffe(PROTOTXT_PATH, MODEL_PATH)
 
-        self.__last_detected_object = Value("i", 21)
+        self.__last_detected_object = Value("i", CLASSES.index("unknown"))
 
         Process(target=self.__detect_objects).start()
                 
