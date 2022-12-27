@@ -10,7 +10,6 @@ import math
 TILE_SIZE = 6 # 6 x 6 cm
 CM = 132 # 132 motor steps = 1cm
 VISION_RANGE = 3 # tiles in front of the robot
-EMERGENCY_STOP_DISTANCE = 10 # cm
 
 
 # In development
@@ -25,7 +24,6 @@ class Robot():
         self.__beeper = Beeper()
 
         self.__map = Map()
-        self.__orientation = 'N'
 
         if sound_signals:
             self.__beeper.beep(3, 0.1)
@@ -43,301 +41,35 @@ class Robot():
         while True:
             if self.__remote_receiver.is_start_button_pressed():
                 if self.__remote_receiver.get_mode() == "Autonomous mode":
-                    command = self.__remote_receiver.get_command()
-
-                    if command == "Explore":
-                        self.__explore()
-
-                    elif command == "Find a human": 
-                        # TODO
-                        print("Find a human")
-
-                    elif command == "Return to home":
-                        # TODO
-                        print("Return to home")
+                    self.__autonomous_mode()
 
                 elif self.__remote_receiver.get_mode() == "Manual mode":
                     self.__manual_mode()
-
-       
-    #----------------------------------------
-    def __explore(self):
-        while self.__remote_receiver.is_start_button_pressed():
-            # add tiles to map
-            self.__update_map()
-            #self.__map.display_map()
-
-            # check if front is free
-            if not self.__is_facing_obstacle() and self.__sensing_system.is_front_clear():
-                self.__move_forward()
-                self.__update_position()
-
-            elif not self.__is_obstacle_on_left():
-                self.__turn_left()
-
-            elif not self.__is_obstacle_on_right():
-                self.__turn_right()
-
-            else:
-                self.__turn_left()
-                self.__turn_left()
-
-
-    #
-    def __move_forward(self):
-        for _ in range(CM * TILE_SIZE):
-            if self.__sensing_system.is_front_clear():
-                self.__drivetrain.rotate('f')
-            else:
-                break
-
-    #
-    def __turn_left(self):
-        self.__drivetrain.turn('l', 90)
-
-        if self.__orientation == 'N':
-            self.__orientation = 'W'
-
-        elif self.__orientation == 'W':
-            self.__orientation = 'S'
-
-        elif self.__orientation == 'S':
-            self.__orientation = 'E'
-
-        elif self.__orientation == 'E':
-            self.__orientation = 'N'
     
 
-    #
-    def __turn_right(self):
-        self.__drivetrain.turn('r', 90)
+    def __autonomous_mode(self):
+        while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Autonomous mode":
+            command = self.__remote_receiver.get_command()
 
-        if self.__orientation == 'N':
-            self.__orientation = 'E'
+            if command == "Explore":
+                if self.__debug:
+                    print("Task \"Explore\" is being executed")
 
-        elif self.__orientation == 'E':
-            self.orientation = 'S'
+                self.__explore()
 
-        elif self.__orientation == 'S':
-            self.__orientation = 'W'
+            elif command == "Find a bottle": 
+                if self.__debug:
+                    print("Task \"Find a bottle\" is being executed")
 
-        elif self.__orientation == 'W':
-            self.__orientation = 'N'
-    
+                self.__find_object("bottle")
 
-    def __update_position(self):
-        if self.__orientation == 'N':
-            self.__map.cur_y += 1
+            elif command == "Return to home":
+                if self.__debug:
+                    print("Task \"Return to home\" is being executed")
 
-        elif self.__orientation == 'E':
-            self.__map.cur_x += 1
-
-        elif self.__orientation == 'S':
-            self.__map.cur_y -= 1
-
-        elif self.__orientation == 'W':
-            self.__map.cur_x -= 1
-    
-
-    def __is_facing_obstacle(self):
-        if self.__orientation == 'N':
-            return self.__map.is_obstacle(self.__map.cur_x, self.__map.cur_y + 1) or self.__map.is_obstacle(self.__map.cur_x + 1, self.__map.cur_y + 1) or self.__map.is_obstacle(self.__map.cur_x - 1, self.__map.cur_y + 1)
-        
-        elif self.__orientation == 'E':
-            return self.__map.is_obstacle(self.__map.cur_x + 1, self.__map.cur_y) or self.__map.is_obstacle(self.__map.cur_x + 1, self.__map.cur_y + 1) or self.__map.is_obstacle(self.__map.cur_x + 1, self.__map.cur_y - 1)
-        
-        elif self.__orientation == 'S':
-            return self.__map.is_obstacle(self.__map.cur_x, self.__map.cur_y - 1) or self.__map.is_obstacle(self.__map.cur_x + 1, self.__map.cur_y - 1) or self.__map.is_obstacle(self.__map.cur_x - 1, self.__map.cur_y - 1)
-        
-        elif self.__orientation == 'W':
-            return self.__map.is_obstacle(self.__map.cur_x - 1, self.__map.cur_y) or self.__map.is_obstacle(self.__map.cur_x - 1, self.__map.cur_y + 1) or self.__map.is_obstacle(self.__map.cur_x - 1, self.__map.cur_y - 1)
+                self.__return_to_home()
 
 
-    def __is_obstacle_on_left(self):
-        if self.__orientation == 'N':
-            return self.__map.is_obstacle(self.__map.cur_x - 1, self.__map.cur_y)
-
-        elif self.__orientation == 'E':
-            return self.__map.is_obstacle(self.__map.cur_x, self.__map.cur_y + 1)
-
-        elif self.__orientation == 'S':
-            return self.__map.is_obstacle(self.__map.cur_x + 1, self.__map.cur_y)
-
-        elif self.__orientation == 'W':
-            return self.__map.is_obstacle(self.__map.cur_x, self.__map.cur_y - 1)
-
-
-    def __is_obstacle_on_right(self):
-        if self.__orientation == 'N':
-            return self.__map.is_obstacle(self.__map.cur_x + 1, self.__map.cur_y)
-
-        elif self.__orientation == 'E':
-            return self.__map.is_obstacle(self.__map.cur_x, self.__map.cur_y - 1)
-
-        elif self.__orientation == 'S':
-            return self.__map.is_obstacle(self.__map.cur_x - 1, self.__map.cur_y)
-
-        elif self.__orientation == 'W':
-            return self.__map.is_obstacle(self.__map.cur_x, self.map.__cur_y + 1)
-
-
-    def __get_tile_count(self, distance):
-        tile_count = math.floor(distance / TILE_SIZE)
-
-        if tile_count > VISION_RANGE:
-            return VISION_RANGE, False
-
-        else:
-            return tile_count, True
-
-    #
-    def __update_map(self):
-        if self.__orientation == 'N':
-            # adding forward tiles
-            distance =  self.__sensing_system.get_front_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x, self.__map.cur_y + i + 1, unknown = False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x, self.__map.cur_y +
-                              tile_count, unknown=False, obstacle=True)
-
-            # adding left tiles
-            distance =  self.__sensing_system.get_left_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x - 1,
-                                  self.__map.cur_y + i + 1, unknown=False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x - 1, self.__map.cur_y + tile_count,
-                              unknown=False, obstacle=True)
-
-            # adding right tiles
-            distance =  self.__sensing_system.get_right_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x + 1,
-                                  self.__map.cur_y + i + 1, unknown=False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x + 1, self.__map.cur_y + tile_count,
-                              unknown=False, obstacle=True)
-
-        elif self.__orientation == 'E':
-            # adding forward tiles
-            distance =  self.__sensing_system.get_front_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x + i + 1, self.__map.cur_y, unknown = False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x + tile_count, self.__map.cur_y,
-                              unknown=False, obstacle=True)
-
-            # adding left tiles
-            distance =  self.__sensing_system.get_left_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x + i + 1,
-                                  self.__map.cur_y + 1, unknown=False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x + tile_count, self.__map.cur_y + 1,
-                              unknown=False, obstacle=True)
-
-            # adding right tiles
-            distance =  self.__sensing_system.get_right_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x + i + 1,
-                                  self.__map.cur_y - 1, unknown=False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x + tile_count, self.__map.cur_y - 1,
-                              unknown=False, obstacle=True)
-
-        elif self.__orientation == 'S':
-            # adding forward tiles
-            distance =  self.__sensing_system.get_front_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x, self.__map.cur_y - i - 1, unknown = False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x, self.__map.cur_y -
-                              tile_count, unknown=False, obstacle=True)
-
-            # adding left tiles
-            distance =  self.__sensing_system.get_left_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x + 1,
-                                  self.__map.cur_y - i - 1, unknown=False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x + 1, self.__map.cur_y - tile_count,
-                              unknown=False, obstacle=True)
-
-            # adding right tiles
-            distance =  self.__sensing_system.get_right_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x - 1,
-                                  self.__map.cur_y - i - 1, unknown=False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x - 1, self.__map.cur_y - tile_count,
-                              unknown=False, obstacle=True)
-
-        elif self.__orientation == 'W':
-            # adding forward tiles
-            distance =  self.__sensing_system.get_front_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x - i - 1, self.__map.cur_y, unknown = False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x - tile_count, self.__map.cur_y,
-                              unknown=False, obstacle=True)
-
-            # adding left tiles
-            distance =  self.__sensing_system.get_left_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x - i - 1,
-                                  self.__map.cur_y - 1, unknown=False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x - tile_count, self.__map.cur_y - 1,
-                              unknown=False, obstacle=True)
-
-            # adding right tiles
-            distance =  self.__sensing_system.get_right_sensor_distance()
-            tile_count, has_obstacle = self.__get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.__map.add_tile(self.__map.cur_x - i - 1,
-                                  self.__map.cur_y + 1, unknown=False)
-
-            if has_obstacle:
-                self.__map.add_tile(self.__map.cur_x - tile_count, self.__map.cur_y + 1,
-                              unknown=False, obstacle=True)
-
-
-    #----------------------------------------
     def __manual_mode(self):
         while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Manual mode":
             if self.__remote_receiver.get_last_key_press() == "Forward":
@@ -360,7 +92,265 @@ class Robot():
                 self.__turn_right()
                 self.__remote_receiver.reset_last_key_press()
 
+       
+    def __explore(self):
+        while self.__remote_receiver.is_start_button_pressed():
+            # add tiles to map
+            self.__update_map()
+
+            # check if front is free
+            if not self.__is_facing_obstacle() and self.__sensing_system.is_front_clear():
+                self.__move_forward()
+                self.__map.update_position()
+
+            elif not self.__is_obstacle_on_left():
+                self.__turn_left()
+
+            elif not self.__is_obstacle_on_right():
+                self.__turn_right()
+
+            else:
+                self.__turn_left()
+                self.__turn_left()
+
+        self.__map.display_map()
+
+
+    def __find_object(self, object):
+        print("Not implemented yet!")
+
+
+    def __return_to_home(self):
+        print("Not implemented yet!")
+
+
+    def __move_forward(self):
+        for _ in range(CM * TILE_SIZE):
+            if self.__sensing_system.is_front_clear():
+                self.__drivetrain.rotate('f')
+            else:
+                break
+
+    
+    def __turn(self, direction):
+        self.__drivetrain.turn(direction, 90)
+        self.__map.update_orientation(direction)
+    
+    # move to Map() class
+    def __is_facing_obstacle(self):
+        current_orientation = self.__map.get_current_orientation()
+        current_x_position = self.__map.get_current_x_position()
+        current_y_position = self.__map.get_current_y_position()
+
+        if current_orientation == 'N':
+            return self.__map.is_obstacle(current_x_position, current_y_position + 1) or \
+                   self.__map.is_obstacle(current_x_position + 1, current_y_position + 1) or \
+                   self.__map.is_obstacle(current_x_position - 1, current_y_position + 1)
+        
+        elif current_orientation == 'E':
+            return self.__map.is_obstacle(current_x_position + 1, current_y_position) or \
+                   self.__map.is_obstacle(current_x_position + 1, current_y_position + 1) or \
+                   self.__map.is_obstacle(current_x_position + 1, current_y_position - 1)
+        
+        elif current_orientation == 'S':
+            return self.__map.is_obstacle(current_x_position, current_y_position - 1) or \
+                   self.__map.is_obstacle(current_x_position + 1, current_y_position - 1) or \
+                   self.__map.is_obstacle(current_x_position - 1, current_y_position - 1)
+        
+        elif current_orientation == 'W':
+            return self.__map.is_obstacle(current_x_position - 1, current_y_position) or \
+                   self.__map.is_obstacle(current_x_position - 1, current_y_position + 1) or \
+                   self.__map.is_obstacle(current_x_position - 1, current_y_position - 1)
+
+    # move to Map() class
+    def __is_obstacle_on_left(self):
+        current_orientation = self.__map.get_current_orientation()
+        current_x_position = self.__map.get_current_x_position()
+        current_y_position = self.__map.get_current_y_position()
+
+        if current_orientation == 'N':
+            return self.__map.is_obstacle(current_x_position - 1, current_y_position)
+
+        elif current_orientation == 'E':
+            return self.__map.is_obstacle(current_x_position, current_y_position + 1)
+
+        elif current_orientation == 'S':
+            return self.__map.is_obstacle(current_x_position + 1, current_y_position)
+
+        elif current_orientation == 'W':
+            return self.__map.is_obstacle(current_x_position, current_y_position - 1)
+
+    # move to Map() class
+    def __is_obstacle_on_right(self):
+        current_orientation = self.__map.get_current_orientation()
+        current_x_position = self.__map.get_current_x_position()
+        current_y_position = self.__map.get_current_y_position()
+
+        if current_orientation == 'N':
+            return self.__map.is_obstacle(current_x_position + 1, current_y_position)
+
+        elif current_orientation == 'E':
+            return self.__map.is_obstacle(current_x_position, current_y_position - 1)
+
+        elif current_orientation == 'S':
+            return self.__map.is_obstacle(current_x_position - 1, current_y_position)
+
+        elif current_orientation == 'W':
+            return self.__map.is_obstacle(current_x_position, current_y_position + 1)
+
+
+    def __get_tile_count(self, distance):
+        tile_count = math.floor(distance / TILE_SIZE)
+
+        if tile_count > VISION_RANGE:
+            return VISION_RANGE, False
+
+        else:
+            return tile_count, True
+
+    
+    def __update_map(self):
+        current_orientation = self.__map.get_current_orientation()
+        current_x_position = self.__map.get_current_x_position()
+        current_y_position = self.__map.get_current_y_position()
+
+        if current_orientation == 'N':
+            # adding forward tiles
+            distance = self.__sensing_system.get_front_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position, current_y_position + i + 1):
+                    self.__map.add_tile(current_x_position, current_y_position + i + 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position, current_y_position + tile_count, is_known = True, is_obstacle = True)
+
+            # adding left tiles
+            distance =  self.__sensing_system.get_left_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position - 1, current_y_position + i + 1):
+                    self.__map.add_tile(current_x_position - 1, current_y_position + i + 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position - 1, current_y_position + tile_count, is_known = True, is_obstacle = True)
+
+            # adding right tiles
+            distance =  self.__sensing_system.get_right_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position + 1, current_y_position + i + 1):
+                    self.__map.add_tile(current_x_position + 1, current_y_position + i + 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position + 1, current_y_position + tile_count, is_known = True, is_obstacle = True)
+
+        elif current_orientation == 'E':
+            # adding forward tiles
+            distance =  self.__sensing_system.get_front_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position + i + 1, current_y_position):
+                    self.__map.add_tile(current_x_position + i + 1, current_y_position, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position + tile_count, current_y_position, is_known = True, is_obstacle = True)
+
+            # adding left tiles
+            distance =  self.__sensing_system.get_left_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position + i + 1, current_y_position + 1):
+                    self.__map.add_tile(current_x_position + i + 1, current_y_position + 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position + tile_count, current_y_position + 1, is_known = True, is_obstacle = True)
+
+            # adding right tiles
+            distance =  self.__sensing_system.get_right_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position + i + 1, current_y_position - 1):
+                    self.__map.add_tile(current_x_position + i + 1, current_y_position - 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position + tile_count, current_y_position - 1, is_known = True, is_obstacle = True)
+
+        elif current_orientation == 'S':
+            # adding forward tiles
+            distance =  self.__sensing_system.get_front_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position, current_y_position - i - 1):
+                    self.__map.add_tile(current_x_position, current_y_position - i - 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position, current_y_position - tile_count, is_known = True, is_obstacle = True)
+
+            # adding left tiles
+            distance =  self.__sensing_system.get_left_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position + 1, current_y_position - i - 1):
+                    self.__map.add_tile(current_x_position + 1, current_y_position - i - 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position + 1, current_y_position - tile_count, is_known = True, is_obstacle = True)
+
+            # adding right tiles
+            distance =  self.__sensing_system.get_right_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position - 1, current_y_position - i - 1):
+                    self.__map.add_tile(current_x_position - 1, current_y_position - i - 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position - 1, current_y_position - tile_count, is_known = True, is_obstacle = True)
+
+        elif current_orientation == 'W':
+            # adding forward tiles
+            distance =  self.__sensing_system.get_front_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position - i - 1, current_y_position):
+                    self.__map.add_tile(current_x_position - i - 1, current_y_position, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position - tile_count, current_y_position, is_known = True, is_obstacle = True)
+
+            # adding left tiles
+            distance =  self.__sensing_system.get_left_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position - i - 1, current_y_position - 1):
+                    self.__map.add_tile(current_x_position - i - 1, current_y_position - 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position - tile_count, current_y_position - 1, is_known = True, is_obstacle = True)
+
+            # adding right tiles
+            distance =  self.__sensing_system.get_right_sensor_distance()
+            tile_count, has_obstacle = self.__get_tile_count(distance)
+
+            for i in range(tile_count):
+                if not self.__map.get_tile(current_x_position - i - 1, current_y_position + 1):
+                    self.__map.add_tile(current_x_position - i - 1, current_y_position + 1, is_known = True)
+
+            if has_obstacle:
+                self.__map.add_tile(current_x_position - tile_count, current_y_position + 1, is_known = True, is_obstacle = True)
+
 
 if __name__ == "__main__":
-    robot = Robot(imu_auto_calibrate = True, sound_signals = False, debug = True)
+    robot = Robot(imu_auto_calibrate = False, sound_signals = False, debug = True)
     
