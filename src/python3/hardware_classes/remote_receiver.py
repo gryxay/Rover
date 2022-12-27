@@ -11,7 +11,7 @@ KEYBINDS = {
     "61186": "Stop",
     "61187": "Start",
     "61188": "Explore",
-    "61189": "Find a human",
+    "61189": "Find a bottle",
     "61190": "Return to home",
     "61191": "Clear queue",
     "61192": "Unsigned",
