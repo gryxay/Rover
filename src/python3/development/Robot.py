@@ -29,8 +29,6 @@ class Robot():
         if sound_signals:
             self.__beeper.beep(3, 0.1)
 
-        self.__drivetrain.toggle_power(True)
-
         # Listen to remote for commands
         self.__listen_to_remote()
 
@@ -72,11 +70,13 @@ class Robot():
 
 
     def __manual_mode(self):
+        self.__drivetrain.toggle_power(True)
+
         while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Manual mode":
             if self.__remote_receiver.get_last_key_press() == "Forward":
                 while self.__sensing_system.is_front_clear() and self.__remote_receiver.get_last_key_press() == "Forward":
                     self.__drivetrain.rotate('f')
-
+                
                 self.__remote_receiver.reset_last_key_press()
 
             elif self.__remote_receiver.get_last_key_press() == "Backward":
@@ -93,8 +93,12 @@ class Robot():
                 self.__turn('r')
                 self.__remote_receiver.reset_last_key_press()
 
+        self.__drivetrain.toggle_power(False)
+
        
     def __explore(self):
+        self.__drivetrain.toggle_power(True)
+
         while self.__remote_receiver.is_start_button_pressed():
             # add tiles to map
             self.__map.update_map(self.__sensing_system.get_sensor_data())
@@ -114,6 +118,7 @@ class Robot():
                 self.__turn('l')
                 self.__turn('l')
 
+        self.__drivetrain.toggle_power(False)
         self.__map.display_map()
 
 
@@ -129,15 +134,16 @@ class Robot():
         for _ in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
             if self.__sensing_system.is_front_clear():
                 self.__drivetrain.rotate('f')
+
             else:
                 break
 
     
     def __turn(self, direction):
-        self.__drivetrain.turn(direction, 90)
+        self.__drivetrain.strict_turn(direction)
         self.__map.update_orientation(direction)
 
 
 if __name__ == "__main__":
-    robot = Robot(imu_auto_calibrate = False, sound_signals = False, debug = True)
+    robot = Robot(imu_auto_calibrate = True, sound_signals = False, debug = True)
     
