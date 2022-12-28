@@ -59,9 +59,11 @@ class Drivetrain:
 		if direction == 'f':
 			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
 			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
+
 		elif direction == 'b':
 			GPIO.output(self.__dir_pin_1, GPIO.LOW)
 			GPIO.output(self.__dir_pin_2, GPIO.LOW)
+
 
 		GPIO.output(self.__step_pin_1, GPIO.HIGH)
 		GPIO.output(self.__step_pin_2, GPIO.HIGH)
@@ -72,29 +74,32 @@ class Drivetrain:
 		sleep(Drivetrain_Constants.DRIVING_DELAY)
 
 
-	def drive(self, direction, rotations):
+	def __drive(self, direction, motor_steps, delay = Drivetrain_Constants.DRIVING_DELAY):
 		if direction == 'f':
 			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
 			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
+
 		elif direction == 'b':
 			GPIO.output(self.__dir_pin_1, GPIO.LOW)
 			GPIO.output(self.__dir_pin_2, GPIO.LOW)
 	
-		for i in range(rotations * Drivetrain_Constants.SPR):
+
+		for i in range(motor_steps):
 			GPIO.output(self.__step_pin_1, GPIO.HIGH)
 			GPIO.output(self.__step_pin_2, GPIO.HIGH)
 
-			sleep(Drivetrain_Constants.DRIVING_DELAY)
+			sleep(delay)
 
 			GPIO.output(self.__step_pin_1, GPIO.LOW)
 			GPIO.output(self.__step_pin_2, GPIO.LOW)
 			
-			sleep(Drivetrain_Constants.DRIVING_DELAY)
+			sleep(delay)
 
 
 	# Works for turns up to 360 degrees
 	def turn(self, direction, degrees):
 		turning_offset = (degrees % 360.0) / 30
+
 
 		if direction == 'l':
 			GPIO.output(self.__dir_pin_1, GPIO.LOW)
@@ -112,7 +117,8 @@ class Drivetrain:
 
 			final_orientation = (self.__imu.get_yaw_value() + degrees % 360.0) % 360.0
 
-		while round(self.__imu.get_yaw_value(), 0) != round(final_orientation - turning_offset, 0):
+
+		while round(self.__imu.get_yaw_value()) != round(final_orientation - turning_offset):
 			GPIO.output(self.__step_pin_1, GPIO.HIGH)
 			GPIO.output(self.__step_pin_2, GPIO.HIGH)
 
@@ -122,6 +128,61 @@ class Drivetrain:
 			GPIO.output(self.__step_pin_2, GPIO.LOW)
 			
 			sleep(Drivetrain_Constants.TURNING_DELAY)
+
+
+	def strict_turn(self, direction):
+		turning_offset = Drivetrain_Constants.STRICT_TURN_TURNING_OFFSET
+
+
+		if direction == 'l':
+			self.__drive('f', \
+						 round(Drivetrain_Constants.LEFT_STRICT_TURN_FORWARD_OFFSET * Drivetrain_Constants.CM), \
+						 Drivetrain_Constants.STRICT_TURN_DRIVING_DELAY)
+
+		elif direction == 'r':
+			self.__drive('f', \
+						 round(Drivetrain_Constants.RIGHT_STRICT_TURN_FORWARD_OFFSET * Drivetrain_Constants.CM), \
+						 Drivetrain_Constants.STRICT_TURN_DRIVING_DELAY)
+
+
+		if direction == 'l':
+			GPIO.output(self.__dir_pin_1, GPIO.LOW)
+			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
+
+			final_orientation = self.__imu.get_yaw_value() - Drivetrain_Constants.STRICT_TURN_TURNING_ANGLE
+			turning_offset *= -1
+
+			if final_orientation < 0:
+				final_orientation = 360.0 + final_orientation
+
+		elif direction == 'r':
+			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
+			GPIO.output(self.__dir_pin_2, GPIO.LOW)
+
+			final_orientation = (self.__imu.get_yaw_value() + Drivetrain_Constants.STRICT_TURN_TURNING_ANGLE) % 360.0
+
+
+		while round(self.__imu.get_yaw_value()) != round(final_orientation - turning_offset):
+			GPIO.output(self.__step_pin_1, GPIO.HIGH)
+			GPIO.output(self.__step_pin_2, GPIO.HIGH)
+
+			sleep(Drivetrain_Constants.TURNING_DELAY)
+			
+			GPIO.output(self.__step_pin_1, GPIO.LOW)
+			GPIO.output(self.__step_pin_2, GPIO.LOW)
+			
+			sleep(Drivetrain_Constants.TURNING_DELAY)
+
+
+		if direction == 'l':
+			self.__drive('b', \
+						 round(Drivetrain_Constants.LEFT_STRICT_TURN_BACKWARD_OFFSET * Drivetrain_Constants.CM), \
+						 Drivetrain_Constants.STRICT_TURN_DRIVING_DELAY)
+
+		elif direction == 'r':
+			self.__drive('b', \
+						 round(Drivetrain_Constants.RIGHT_STRICT_TURN_BACKWARD_OFFSET * Drivetrain_Constants.CM), \
+						 Drivetrain_Constants.STRICT_TURN_DRIVING_DELAY)
 
 
 	def toggle_power(self, is_on):
