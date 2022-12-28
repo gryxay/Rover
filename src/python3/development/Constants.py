@@ -25,7 +25,19 @@ class Drivetrain_Constants:
     DRIVING_DELAY = 0.0001
 
     # Time between signal pulses when turning
-    TURNING_DELAY = 0.0005
+    TURNING_DELAY = 0.00075
+
+    # strict_turn() constants
+    STRICT_TURN_TURNING_ANGLE = 90
+    STRICT_TURN_TURNING_OFFSET = 3
+
+    STRICT_TURN_DRIVING_DELAY = 0.0005
+
+    LEFT_STRICT_TURN_FORWARD_OFFSET = 2
+    LEFT_STRICT_TURN_BACKWARD_OFFSET = 2.5
+
+    RIGHT_STRICT_TURN_FORWARD_OFFSET = 1
+    RIGHT_STRICT_TURN_BACKWARD_OFFSET = 5
 
 
 class IMU_Constants:
