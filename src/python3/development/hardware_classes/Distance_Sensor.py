@@ -1,12 +1,14 @@
 import RPi.GPIO as GPIO
 import time
 
-
-DELAY = 0.01			# Seconds
-SIGNAL_LENGTH = 0.00001 # Seconds
+from Constants import Distance_Sensor_Constants
 
 
-class Distance_sensor:
+class Distance_Sensor:
+	__trig_pin = None
+	__echo_pin = None
+	
+
 	def __init__(self, trig_pin, echo_pin):
 		self.__trig_pin = trig_pin
 		self.__echo_pin = echo_pin
@@ -19,10 +21,10 @@ class Distance_sensor:
 
 	def get_distance(self):
 		GPIO.output(self.__trig_pin, GPIO.LOW)
-		time.sleep(DELAY)
+		time.sleep(Distance_Sensor_Constants.DELAY)
 
 		GPIO.output(self.__trig_pin, GPIO.HIGH)
-		time.sleep(SIGNAL_LENGTH)
+		time.sleep(Distance_Sensor_Constants.SIGNAL_LENGTH)
 
 		GPIO.output(self.__trig_pin, GPIO.LOW)
 

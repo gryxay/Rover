@@ -1,23 +1,34 @@
-from imu import IMU
 import RPi.GPIO as GPIO
 from time import sleep
 
+from IMU import IMU
 
-# Drivetrain constants
-LEFT_MOTOR_DIR_PIN = 16
-LEFT_MOTOR_STEP_PIN = 20
-RIGHT_MOTOR_DIR_PIN = 19
-RIGHT_MOTOR_STEP_PIN = 26
-SLEEP_PIN = 21
-
-SPR = 800       		# Signal pulses Per Revolution
-DRIVING_DELAY = 0.0001	# Time between signal pulses when driving
-TURNING_DELAY = 0.0005	# Time between signal pulses when turning
+from Constants import Drivetrain_Constants
 
 
 class Drivetrain:
-	def __init__(self, dir_pin_1 = LEFT_MOTOR_DIR_PIN, step_pin_1 = LEFT_MOTOR_STEP_PIN, \
-					dir_pin_2 = RIGHT_MOTOR_DIR_PIN, step_pin_2 = RIGHT_MOTOR_STEP_PIN, sleep_pin = SLEEP_PIN, imu_auto_calibrate = False, debug = False):
+	# Left motor
+	__dir_pin_1 = None
+	__step_pin_1 = None
+
+	# Right motor
+	__dir_pin_2 = None
+	__step_pin_2 = None
+
+	__sleep_pin = None
+
+	__imu = None
+
+	__debug = None
+
+
+	def __init__(self, dir_pin_1 = Drivetrain_Constants.LEFT_MOTOR_DIR_PIN, \
+				 	   step_pin_1 = Drivetrain_Constants.LEFT_MOTOR_STEP_PIN, \
+					   dir_pin_2 = Drivetrain_Constants.RIGHT_MOTOR_DIR_PIN, \
+					   step_pin_2 = Drivetrain_Constants.RIGHT_MOTOR_STEP_PIN, \
+					   sleep_pin = Drivetrain_Constants.SLEEP_PIN, \
+					   imu_auto_calibrate = False, debug = False):
+					   
 		self.__debug = debug
 
 		# Left motor setup
@@ -41,7 +52,7 @@ class Drivetrain:
 		GPIO.setup(self.__step_pin_2, GPIO.OUT)
 		GPIO.setup(self.__sleep_pin, GPIO.OUT)
 
-		self.__imu = IMU(auto_calibrate = imu_auto_calibrate, debug = debug)
+		self.__imu = IMU(auto_calibrate = imu_auto_calibrate, debug = self.__debug)
 
 
 	def rotate(self, direction):
@@ -54,11 +65,11 @@ class Drivetrain:
 
 		GPIO.output(self.__step_pin_1, GPIO.HIGH)
 		GPIO.output(self.__step_pin_2, GPIO.HIGH)
-		sleep(DRIVING_DELAY)
+		sleep(Drivetrain_Constants.DRIVING_DELAY)
 
 		GPIO.output(self.__step_pin_1, GPIO.LOW)
 		GPIO.output(self.__step_pin_2, GPIO.LOW)
-		sleep(DRIVING_DELAY)
+		sleep(Drivetrain_Constants.DRIVING_DELAY)
 
 
 	def drive(self, direction, rotations):
@@ -69,16 +80,16 @@ class Drivetrain:
 			GPIO.output(self.__dir_pin_1, GPIO.LOW)
 			GPIO.output(self.__dir_pin_2, GPIO.LOW)
 	
-		for i in range(rotations * SPR):
+		for i in range(rotations * Drivetrain_Constants.SPR):
 			GPIO.output(self.__step_pin_1, GPIO.HIGH)
 			GPIO.output(self.__step_pin_2, GPIO.HIGH)
 
-			sleep(DRIVING_DELAY)
+			sleep(Drivetrain_Constants.DRIVING_DELAY)
 
 			GPIO.output(self.__step_pin_1, GPIO.LOW)
 			GPIO.output(self.__step_pin_2, GPIO.LOW)
 			
-			sleep(DRIVING_DELAY)
+			sleep(Drivetrain_Constants.DRIVING_DELAY)
 
 
 	# Works for turns up to 360 degrees
@@ -105,12 +116,12 @@ class Drivetrain:
 			GPIO.output(self.__step_pin_1, GPIO.HIGH)
 			GPIO.output(self.__step_pin_2, GPIO.HIGH)
 
-			sleep(TURNING_DELAY)
+			sleep(Drivetrain_Constants.TURNING_DELAY)
 			
 			GPIO.output(self.__step_pin_1, GPIO.LOW)
 			GPIO.output(self.__step_pin_2, GPIO.LOW)
 			
-			sleep(TURNING_DELAY)
+			sleep(Drivetrain_Constants.TURNING_DELAY)
 
 
 	def toggle_power(self, is_on):

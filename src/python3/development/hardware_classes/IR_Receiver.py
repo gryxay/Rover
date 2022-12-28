@@ -2,52 +2,38 @@ from multiprocessing import Process, Queue, Value
 from time import sleep
 import evdev
 
-from beeper import Beeper
+from Beeper import Beeper
 
-
-KEYBINDS = {
-    "61184": "Autonomous mode",
-    "61185": "Manual mode",
-    "61186": "Stop",
-    "61187": "Start",
-    "61188": "Explore",
-    "61189": "Find a bottle",
-    "61190": "Return to home",
-    "61191": "Clear queue",
-    "61192": "Unsigned",
-    "61193": "Unsigned",
-    "61194": "Unsigned",
-    "61195": "Unsigned",
-    "61196": "Unsigned",
-    "61197": "Forward",
-    "61198": "Unsigned",
-    "61199": "Unsigned",
-    "61200": "Left",
-    "61201": "Stop",
-    "61202": "Right",
-    "61203": "Unsigned",
-    "61204": "Unsigned",
-    "61205": "Backward",
-    "61206": "Unsigned",
-    "61207": "Unsigned"
-}
+from Constants import IR_Receiver_Constants
 
 
 class IR_Receiver:
-    def __init__(self, sound_signals = True, debug = False):
+    __beeper = None
+    __receiver = None
+
+    __command_queue = Queue()
+    __start_button_state = Value('b', 0)
+    __last_key_press = Value('i', 0)
+
+    # 0 - "Autonomous mode"; 1 - "Manual mode"
+    __mode = Value('b', 0)
+
+    __background_process = None
+
+    __sound_signals = None
+    __debug = None
+
+
+    def __init__(self, beeper, sound_signals = True, debug = False):
         self.__sound_signals = sound_signals
         self.__debug = debug
         
+        self.__beeper = beeper
         self.__receiver = self.__get_device()
-        self.__beeper = Beeper()
-
-        self.__command_queue = Queue()
-        self.__last_key_press = Value('i', 0)
-        self.__mode = Value('b', 0) # 0 - "Autonomous mode"; 1 - "Manual mode"
-        self.__start_button_state = Value('b', 0)
 
         # Start a process, that constantly reads IR receiver data
-        Process(target = self.__receive_command_keys).start()
+        self.__background_process = Process(target = self.__receive_command_keys)
+        self.__background_process.start()
 
 
     def __get_device(self):
@@ -135,7 +121,7 @@ class IR_Receiver:
 
                         continue
 
-                    elif str(reading.value) in KEYBINDS and reading.value != last_reading:
+                    elif str(reading.value) in IR_Receiver_Constants.KEYBINDS and reading.value != last_reading:
                         last_reading = reading.value
                         self.__command_queue.put(reading.value)
 
@@ -149,7 +135,7 @@ class IR_Receiver:
 
                 # If remote is in Manual mode
                 elif self.__mode.value == 1:
-                    if str(reading.value) in KEYBINDS and reading.value != self.__last_key_press.value:
+                    if str(reading.value) in IR_Receiver_Constants.KEYBINDS and reading.value != self.__last_key_press.value:
                         self.__last_key_press.value = reading.value
 
                         last_reading = reading.value
@@ -159,7 +145,7 @@ class IR_Receiver:
 
     
     def __get_key(self, value):
-        for key, val in KEYBINDS.items():
+        for key, val in IR_Receiver_Constants.KEYBINDS.items():
             if value == val:
                 return int(key)
 
@@ -193,7 +179,7 @@ class IR_Receiver:
         if self.__command_queue.empty():
             return None
 
-        command = KEYBINDS[str(self.__command_queue.get())]
+        command = IR_Receiver_Constants.KEYBINDS[str(self.__command_queue.get())]
 
         if command == "Unsigned":
             command = self.get_command()
@@ -203,8 +189,8 @@ class IR_Receiver:
 
     # Should be used in Manual mode
     def get_last_key_press(self):
-        if str(self.__last_key_press.value) in KEYBINDS:
-            return KEYBINDS[str(self.__last_key_press.value)]
+        if str(self.__last_key_press.value) in IR_Receiver_Constants.KEYBINDS:
+            return IR_Receiver_Constants.KEYBINDS[str(self.__last_key_press.value)]
 
         return None
 

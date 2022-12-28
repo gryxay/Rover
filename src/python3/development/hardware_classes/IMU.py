@@ -1,25 +1,33 @@
-from MPU6050 import MPU6050
-from SimplePID import SimplePID
 from multiprocessing import Process, Value
 from time import sleep
 
+from MPU6050 import MPU6050
+from SimplePID import SimplePID
 
-I2C_BUS = 1
-DEVICE_ADDRESS = 0x68
-
-CALIBRATION_DATA_FILE = "calibration_values.txt"
+from Constants import IMU_Constants
 
 
 class IMU:
+    __mpu = None
+
+    __x_accel_offset = 0
+    __y_accel_offset = 0
+    __z_accel_offset = 0
+    __x_gyro_offset = 0
+    __y_gyro_offset = 0
+    __z_gyro_offset = 0
+
+    __roll = Value('f', 0)
+    __pitch = Value('f', 0)
+    __yaw = Value('f', 0)
+
+    __background_process = None
+
+    __debug = None
+
+
     def __init__(self, auto_calibrate = False, debug = False):
         self.__debug = debug
-
-        self.__x_accel_offset = 0
-        self.__y_accel_offset = 0
-        self.__z_accel_offset = 0
-        self.__x_gyro_offset = 0
-        self.__y_gyro_offset = 0
-        self.__z_gyro_offset = 0
 
         if auto_calibrate:
             self.__calibrate()
@@ -29,17 +37,22 @@ class IMU:
         if self.__debug:
             print("Initialising IMU:")
         
-        self.__mpu = MPU6050(I2C_BUS, DEVICE_ADDRESS, self.__x_accel_offset, self.__y_accel_offset, \
-            self.__z_accel_offset, self.__x_gyro_offset, self.__y_gyro_offset, self.__z_gyro_offset, debug)
+        self.__mpu = MPU6050(IMU_Constants.I2C_BUS, \
+                             IMU_Constants.DEVICE_ADDRESS, \
+                             self.__x_accel_offset, \
+                             self.__y_accel_offset, \
+                             self.__z_accel_offset, \
+                             self.__x_gyro_offset, \
+                             self.__y_gyro_offset, \
+                             self.__z_gyro_offset, \
+                             self.__debug)
+
         self.__mpu.dmp_initialize()
         self.__mpu.set_DMP_enabled(True)
 
-        self.__roll = Value('f', 0)
-        self.__pitch = Value('f', 0)
-        self.__yaw = Value('f', 0)
-
         # Start a process, that constantly updates yaw data in the background
-        Process(target = self.__update_imu_readings).start()
+        self.__background_process = Process(target = self.__update_imu_readings)
+        self.__background_process.start()
 
         # Wait for yaw data to stabilize
         if self.__debug:
@@ -52,16 +65,17 @@ class IMU:
         if self.__debug:
             print("Calibrating the IMU...")
 
+        mpu = MPU6050(IMU_Constants.I2C_BUS, \
+                      IMU_Constants.DEVICE_ADDRESS, \
+                      0, 0, 0, 0, 0, 0, \
+                      self.__debug)
+    
         x_accel_offset = 0
         y_accel_offset = 0
         z_accel_offset = 0
         x_gyro_offset = 0
         y_gyro_offset = 0
         z_gyro_offset = 0
-
-        mpu = MPU6050(I2C_BUS, DEVICE_ADDRESS, x_accel_offset, y_accel_offset,
-                    z_accel_offset, x_gyro_offset, y_gyro_offset, z_gyro_offset,
-                    self.__debug)
 
         kp = 0.03125
         ki = 0.25
@@ -236,7 +250,7 @@ class IMU:
         except KeyboardInterrupt:
             pass
 
-        file = open(CALIBRATION_DATA_FILE, "w")
+        file = open(IMU_Constants.CALIBRATION_DATA_FILE, "w")
 
         file.write(str(self.__array_average(x_accel_offset_avg)) + "\n" + 
                     str(self.__array_average(y_accel_offset_avg)) + "\n" +
@@ -249,7 +263,7 @@ class IMU:
 
 
     def __update_offsets(self):
-        file = open(CALIBRATION_DATA_FILE, "r")
+        file = open(IMU_Constants.CALIBRATION_DATA_FILE, "r")
         file_data = file.readlines()
         file.close()
 
@@ -313,7 +327,7 @@ class IMU:
 
 # For testing
 if __name__ == "__main__":
-    imu = IMU(auto_calibrate = True, debug = True)
+    imu = IMU(auto_calibrate = False, debug = True)
 
     while True:
         print(imu.get_roll_value())

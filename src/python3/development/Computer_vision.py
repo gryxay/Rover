@@ -20,7 +20,7 @@ CLASSES = [
 ]
 
 
-class Computer_vision:
+class Computer_Vision:
     def __init__(self):
         self.__camera = cv2.VideoCapture(0)
         self.__camera.set(cv2.CAP_PROP_FRAME_WIDTH, IMAGE_WIDTH)
