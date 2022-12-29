@@ -25,7 +25,7 @@ class Map:
     __map = {}
 
     # [-x, x, -y, y]
-    __bounds = [10, 10, 10, 10]
+    __bounds = [0, 0, 0, 0]
 
     # N - North, E - East, S - South, W - West
     __orientation = 'N'
