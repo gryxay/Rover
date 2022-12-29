@@ -24,10 +24,10 @@ class Robot():
         self.__debug = debug
 
         self.__drivetrain = Drivetrain(imu_auto_calibrate = imu_auto_calibrate, debug = self.__debug)
-        self.__remote_receiver = IR_Recebuzzer = sebuzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
 
         if sound_signals:
-            sebuzzer.beep(3, 0.1)
+            self.__buzzer.beep(3, 0.1)
 
         # Listen to remote for commands
         self.__listen_to_remote()
