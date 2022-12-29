@@ -104,14 +104,14 @@ class Robot():
             self.__map.update_map(self.__sensing_system.get_sensor_data())
 
             # check if front is free
-            if not self.__map.is_facing_obstacle() and self.__sensing_system.is_front_clear():
+            if not self.__map.check_for_obstacles('f') and self.__sensing_system.is_front_clear():
                 self.__move_forward()
                 self.__map.update_position()
 
-            elif not self.__map.is_obstacle_on_left():
+            elif not self.__map.check_for_obstacles('l'):
                 self.__turn('l')
 
-            elif not self.__map.is_obstacle_on_right():
+            elif not self.__map.check_for_obstacles('r'):
                 self.__turn('r')
 
             else:
@@ -145,5 +145,5 @@ class Robot():
 
 
 if __name__ == "__main__":
-    robot = Robot(imu_auto_calibrate = True, sound_signals = False, debug = True)
+    robot = Robot(imu_auto_calibrate = False, sound_signals = True, debug = True)
     
