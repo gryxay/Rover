@@ -79,6 +79,7 @@ class IR_Receiver_Constants:
 class Map_Constants:
     TILE_SIZE = 6
     VISION_RANGE = 3
+    OBSTACLE_CHECKING_RANGE = 7
 
 
 class Sensing_System_Constants:
