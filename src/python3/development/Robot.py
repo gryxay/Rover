@@ -1,7 +1,7 @@
 from Drivetrain import Drivetrain
 from Sensing_System import Sensing_System
 from IR_Receiver import IR_Receiver
-from Beeper import Beeper
+from Buzzer import Buzzer
 from Map import Map
 
 from Constants import Drivetrain_Constants
@@ -13,7 +13,7 @@ class Robot():
     __drivetrain = None
     __sensing_system = Sensing_System()
     __remote_receiver = None
-    __beeper = Beeper()
+    __buzzer = Buzzer()
     __map = Map()
 
     __sound_signals = None
@@ -24,10 +24,10 @@ class Robot():
         self.__debug = debug
 
         self.__drivetrain = Drivetrain(imu_auto_calibrate = imu_auto_calibrate, debug = self.__debug)
-        self.__remote_receiver = IR_Receiver(beeper = self.__beeper, sound_signals = self.__sound_signals, debug = self.__debug)
+        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
 
         if sound_signals:
-            self.__beeper.beep(3, 0.1)
+            self.__buzzer.beep(3, 0.1)
 
         # Listen to remote for commands
         self.__listen_to_remote()
@@ -45,7 +45,7 @@ class Robot():
                 elif self.__remote_receiver.get_mode() == "Manual mode":
                     self.__manual_mode()
     
-
+    #
     def __autonomous_mode(self):
         while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Autonomous mode":
             command = self.__remote_receiver.get_command()
@@ -95,7 +95,7 @@ class Robot():
 
         self.__drivetrain.toggle_power(False)
 
-       
+    #
     def __explore(self):
         self.__drivetrain.toggle_power(True)
 
@@ -121,15 +121,15 @@ class Robot():
         self.__drivetrain.toggle_power(False)
         self.__map.display_map()
 
-
+    #
     def __find_object(self, object):
         print("Not implemented yet!")
 
-
+    #
     def __return_to_home(self):
         print("Not implemented yet!")
 
-
+    #
     def __move_forward(self):
         for _ in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
             if self.__sensing_system.is_front_clear():
