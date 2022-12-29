@@ -12,20 +12,20 @@ from Constants import Map_Constants
 # After initialising the Map, the default tiles will represent the robot's size.
 # Example of the map after initialisation:
 #
-#       ...
-#       ...
-#       ...
-#       .T.
-#       ...
+#       RRR
+#       RRR
+#       RRR
+#       RXR
+#       RRR
 #
-# T - Is the tile, that will be used to track the robot's position.
+# X - Is the tile, that will be used to track the robot's position.
 
 
 class Map:
     __map = {}
 
     # [-x, x, -y, y]
-    __bounds = [10, 10, 10, 10]
+    __bounds = [0, 0, 0, 0]
 
     # N - North, E - East, S - South, W - West
     __orientation = 'N'
@@ -66,6 +66,15 @@ class Map:
             return self.__map[key]
 
         return None
+
+
+    def __is_obstacle(self, x, y) -> bool:
+        key = str(x) + "," + str(y)
+
+        if key not in self.__map:
+            return False
+
+        return self.__map[key].is_obstacle
 
     
     def __get_tile_count(self, distance):
@@ -180,6 +189,34 @@ class Map:
 
                     else:
                         self.add_tile(x, y, times_visited = 1, is_known = True)
+
+
+    def __check_corners_for_obstacles(self, direction):
+        if (direction == 'l' and self.__orientation == 'N') or (direction == 'r' and self.__orientation == 'W'):
+            for x in range(self.get_current_x_position() - 3, self.get_current_x_position() - 1):
+                for y in range(self.get_current_y_position() + 3, self.get_current_y_position() + 4):
+                    if self.__is_obstacle(x, y):
+                        return True
+
+        elif (direction == 'l' and self.__orientation == 'E') or (direction == 'r' and self.__orientation == 'N'):
+            for x in range(self.get_current_x_position() + 2, self.get_current_x_position() + 4):
+                for y in range(self.get_current_y_position() + 3, self.get_current_y_position() + 4):
+                    if self.__is_obstacle(x, y):
+                        return True
+
+        elif (direction == 'l' and self.__orientation == 'S') or (direction == 'r' and self.__orientation == 'E'):
+            for x in range(self.get_current_x_position()+ 2, self.get_current_x_position() + 4):
+                for y in range(self.get_current_y_position() - 3, self.get_current_y_position() - 2):
+                    if self.__is_obstacle(x, y):
+                        return True
+
+        elif (direction == 'l' and self.__orientation == 'W') or (direction == 'r' and self.__orientation == 'S'):
+            for x in range(self.get_current_x_position() - 3, self.get_current_x_position() - 1):
+                for y in range(self.get_current_y_position() - 3, self.get_current_y_position() - 2):
+                    if self.__is_obstacle(x, y):
+                        return True
+
+        return False
             
 
     def set_current_x_position(self, x):
@@ -431,7 +468,7 @@ class Map:
                     tile.is_under_robot = False
 
         elif self.__orientation == 'E':
-            self.__current_tile_position[1] += 1
+            self.__current_tile_position[0] += 1
 
             min_range = self.get_current_y_position() - 1
             max_range = self.get_current_y_position() + 2
@@ -487,7 +524,7 @@ class Map:
                     tile.is_under_robot = False
 
         elif self.__orientation == 'W':
-            self.__current_tile_position[1] -= 1
+            self.__current_tile_position[0] -= 1
 
             min_range = self.get_current_y_position() - 1
             max_range = self.get_current_y_position() + 2
@@ -641,39 +678,33 @@ class Map:
                 self.add_tile(self.get_current_x_position() - tile_count - 4, self.get_current_y_position() + 1, is_known = True, is_obstacle = True)
 
 
-    def is_obstacle(self, x, y) -> bool:
-        key = str(x) + "," + str(y)
-
-        if key not in self.__map:
-            return False
-
-        return self.__map[key].is_obstacle
-
-
     def check_for_obstacles(self, direction) -> bool:
+        if self.__check_corners_for_obstacles(direction):
+            return True
+
         if direction == 'f':
             if self.__orientation == 'N':
                 for x in range(self.get_current_x_position() - 2, self.get_current_x_position() + 3):
                     for y in range(self.get_current_y_position() + 4, self.get_current_y_position() + 4 + Map_Constants.OBSTACLE_CHECKING_RANGE):
-                        if self.is_obstacle(x, y):
+                        if self.__is_obstacle(x, y):
                             return True
 
             elif self.__orientation == 'E':
                 for x in range(self.get_current_x_position() + 4, self.get_current_x_position() + 4 + Map_Constants.OBSTACLE_CHECKING_RANGE):
                     for y in range(self.get_current_y_position() - 2, self.get_current_y_position() + 3):
-                        if self.is_obstacle(x, y):
+                        if self.__is_obstacle(x, y):
                             return True
 
             elif self.__orientation == 'S':
                 for x in range(self.get_current_x_position() - 2, self.get_current_x_position() + 3):
                     for y in range(self.get_current_y_position() - 3 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_y_position() - 3):
-                        if self.is_obstacle(x, y):
+                        if self.__is_obstacle(x, y):
                             return True
 
             elif self.__orientation == 'W':
                 for x in range(self.get_current_x_position() - 3 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_x_position() - 3):
                     for y in range(self.get_current_y_position() - 2, self.get_current_y_position() + 3):
-                        if self.is_obstacle(x, y):
+                        if self.__is_obstacle(x, y):
                             return True
 
         
@@ -683,7 +714,7 @@ class Map:
 
              for x in range(self.get_current_x_position() - 2, self.get_current_x_position() + 3):
                 for y in range(self.get_current_y_position() - 1 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_y_position() - 1):
-                    if self.is_obstacle(x, y):
+                    if self.__is_obstacle(x, y):
                         return True
 
 
@@ -693,7 +724,7 @@ class Map:
 
              for x in range(self.get_current_x_position() - 1 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_x_position() - 1):
                 for y in range(self.get_current_y_position() - 2, self.get_current_y_position() + 3):
-                    if self.is_obstacle(x, y):
+                    if self.__is_obstacle(x, y):
                         return True
         
 
@@ -703,7 +734,7 @@ class Map:
 
              for x in range(self.get_current_x_position() - 2, self.get_current_x_position() + 3):
                 for y in range(self.get_current_y_position() + 2, self.get_current_y_position() + 2 + Map_Constants.OBSTACLE_CHECKING_RANGE):
-                    if self.is_obstacle(x, y):
+                    if self.__is_obstacle(x, y):
                         return True
 
 
@@ -713,61 +744,100 @@ class Map:
 
             for x in range(self.get_current_x_position() + 2, self.get_current_x_position() + 2 + Map_Constants.OBSTACLE_CHECKING_RANGE):
                 for y in range(self.get_current_y_position() - 2, self.get_current_y_position() + 3):
-                    if self.is_obstacle(x, y):
+                    if self.__is_obstacle(x, y):
                         return True
         
         
         return False
 
+    # Returns True if there are tiles in the specified direction with 
+    # tile.get_times_visited() >= self.__get_tile(self.get_current_x_position(), self.get_current_y_position()).get_times_visited()
+    def check_visited_tiles(self, direction) -> bool:
+        current_tile_times_visited = self.__get_tile(self.get_current_x_position(), self.get_current_y_position()).get_times_visited()
 
-    def is_facing_obstacle(self):
-        if self.__orientation == 'N':
-            return self.is_obstacle(self.get_current_x_position(), self.get_current_y_position() + 1) or \
-                   self.is_obstacle(self.get_current_x_position() + 1, self.get_current_y_position() + 1) or \
-                   self.is_obstacle(self.get_current_x_position() - 1, self.get_current_y_position() + 1)
+        if direction == 'f':
+            if self.__orientation == 'N':
+                for x in range(self.get_current_x_position() - 1, self.get_current_x_position() + 2):
+                    for y in range(self.get_current_y_position() + 4, self.get_current_y_position() + 4 + Map_Constants.OBSTACLE_CHECKING_RANGE):
+                        tile = self.__get_tile(x, y)
+
+                        if tile and tile.get_times_visited() >= current_tile_times_visited:
+                            return True
+
+            elif self.__orientation == 'E':
+                for x in range(self.get_current_x_position() + 4, self.get_current_x_position() + 4 + Map_Constants.OBSTACLE_CHECKING_RANGE):
+                    for y in range(self.get_current_y_position() - 1, self.get_current_y_position() + 2):
+                        tile = self.__get_tile(x, y)
+
+                        if tile and tile.get_times_visited() >= current_tile_times_visited:
+                            return True
+
+            elif self.__orientation == 'S':
+                for x in range(self.get_current_x_position() - 1, self.get_current_x_position() + 2):
+                    for y in range(self.get_current_y_position() - 3 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_y_position() - 3):
+                        tile = self.__get_tile(x, y)
+
+                        if tile and tile.get_times_visited() >= current_tile_times_visited:
+                            return True
+
+            elif self.__orientation == 'W':
+                for x in range(self.get_current_x_position() - 3 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_x_position() - 3):
+                    for y in range(self.get_current_y_position() - 1, self.get_current_y_position() + 2):
+                        tile = self.__get_tile(x, y)
+
+                        if tile and tile.get_times_visited() >= current_tile_times_visited:
+                            return True
+
         
-        elif self.__orientation == 'E':
-            return self.is_obstacle(self.get_current_x_position() + 1, self.get_current_y_position()) or \
-                   self.is_obstacle(self.get_current_x_position() + 1, self.get_current_y_position() + 1) or \
-                   self.is_obstacle(self.get_current_x_position() + 1, self.get_current_y_position() - 1)
+        elif (direction == 'b' and self.__orientation == 'N') or \
+             (direction == 'l' and self.__orientation == 'W') or \
+             (direction == 'r' and self.__orientation == 'E'):
+
+             for x in range(self.get_current_x_position() - 1, self.get_current_x_position() + 2):
+                for y in range(self.get_current_y_position() - 1 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_y_position() - 1):
+                    tile = self.__get_tile(x, y)
+
+                    if tile and tile.get_times_visited() >= current_tile_times_visited:
+                        return True
+
+
+        elif (direction == 'b' and self.__orientation == 'E') or \
+             (direction == 'l' and self.__orientation == 'N') or \
+             (direction == 'r' and self.__orientation == 'S'):
+
+             for x in range(self.get_current_x_position() - 1 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_x_position() - 1):
+                for y in range(self.get_current_y_position() - 1, self.get_current_y_position() + 2):
+                    tile = self.__get_tile(x, y)
+
+                    if tile and tile.get_times_visited() >= current_tile_times_visited:
+                        return True
         
-        elif self.__orientation == 'S':
-            return self.is_obstacle(self.get_current_x_position(), self.get_current_y_position() - 1) or \
-                   self.is_obstacle(self.get_current_x_position() + 1, self.get_current_y_position() - 1) or \
-                   self.is_obstacle(self.get_current_x_position() - 1, self.get_current_y_position() - 1)
+
+        elif (direction == 'b' and self.__orientation == 'S') or \
+             (direction == 'l' and self.__orientation == 'E') or \
+             (direction == 'r' and self.__orientation == 'W'):
+
+             for x in range(self.get_current_x_position() - 1, self.get_current_x_position() + 2):
+                for y in range(self.get_current_y_position() + 2, self.get_current_y_position() + 2 + Map_Constants.OBSTACLE_CHECKING_RANGE):
+                    tile = self.__get_tile(x, y)
+
+                    if tile and tile.get_times_visited() >= current_tile_times_visited:
+                        return True
+
+
+        elif (direction == 'b' and self.__orientation == 'W') or \
+             (direction == 'l' and self.__orientation == 'S') or \
+             (direction == 'r' and self.__orientation == 'N'):
+
+            for x in range(self.get_current_x_position() + 2, self.get_current_x_position() + 2 + Map_Constants.OBSTACLE_CHECKING_RANGE):
+                for y in range(self.get_current_y_position() - 1, self.get_current_y_position() + 2):
+                    tile = self.__get_tile(x, y)
+
+                    if tile and tile.get_times_visited() >= current_tile_times_visited:
+                        return True
         
-        elif self.__orientation == 'W':
-            return self.is_obstacle(self.get_current_x_position() - 1, self.get_current_y_position()) or \
-                   self.is_obstacle(self.get_current_x_position() - 1, self.get_current_y_position() + 1) or \
-                   self.is_obstacle(self.get_current_x_position() - 1, self.get_current_y_position() - 1)
-
-    
-    def is_obstacle_on_left(self):
-        if self.__orientation == 'N':
-            return self.is_obstacle(self.get_current_x_position() - 1, self.get_current_y_position())
-
-        elif self.__orientation == 'E':
-            return self.is_obstacle(self.get_current_x_position(), self.get_current_y_position() + 1)
-
-        elif self.__orientation == 'S':
-            return self.is_obstacle(self.get_current_x_position() + 1, self.get_current_y_position())
-
-        elif self.__orientation == 'W':
-            return self.is_obstacle(self.get_current_x_position(), self.get_current_y_position() - 1)
-
-    
-    def is_obstacle_on_right(self):
-        if self.__orientation == 'N':
-            return self.is_obstacle(self.get_current_x_position() + 1, self.get_current_y_position())
-
-        elif self.__orientation == 'E':
-            return self.is_obstacle(self.get_current_x_position(), self.get_current_y_position() - 1)
-
-        elif self.__orientation == 'S':
-            return self.is_obstacle(self.get_current_x_position() - 1, self.get_current_y_position())
-
-        elif self.__orientation == 'W':
-            return self.is_obstacle(self.get_current_x_position(), self.get_current_y_position() + 1)
+        
+        return False
 
 
     def get_shortest_path(self) -> list:
