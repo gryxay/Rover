@@ -2,13 +2,13 @@ from multiprocessing import Process, Queue, Value
 from time import sleep
 import evdev
 
-from Beeper import Beeper
+from Buzzer import Buzzer
 
 from Constants import IR_Receiver_Constants
 
 
 class IR_Receiver:
-    __beeper = None
+    __buzzer = None
     __receiver = None
 
     __command_queue = Queue()
@@ -24,11 +24,11 @@ class IR_Receiver:
     __debug = None
 
 
-    def __init__(self, beeper, sound_signals = True, debug = False):
+    def __init__(self, buzzer, sound_signals = True, debug = False):
         self.__sound_signals = sound_signals
         self.__debug = debug
         
-        self.__beeper = beeper
+        self.__buzzer = buzzer
         self.__receiver = self.__get_device()
 
         # Start a process, that constantly reads IR receiver data
@@ -63,7 +63,7 @@ class IR_Receiver:
                     last_reading = self.__get_key("Start")
 
                     if self.__sound_signals:
-                        self.__beeper.beep(1, 0.1)
+                        self.__buzzer.beep(1, 0.1)
 
                     if self.__debug:
                         print("Receiver: Start button has been pressed")
@@ -76,7 +76,7 @@ class IR_Receiver:
                     last_reading = self.__get_key("Stop")
 
                     if self.__sound_signals:
-                        self.__beeper.beep(1, 0.1)
+                        self.__buzzer.beep(1, 0.1)
 
                     if self.__debug:
                         print("Receiver: Stop button has been pressed")
@@ -90,7 +90,7 @@ class IR_Receiver:
                     last_reading = self.__get_key("Autonomous mode")
 
                     if self.__sound_signals:
-                        self.__beeper.beep(1, 0.1)
+                        self.__buzzer.beep(1, 0.1)
 
                     if self.__debug:
                         print("Receiver: Mode changed to \"Autonomous\"")
@@ -103,7 +103,7 @@ class IR_Receiver:
                     last_reading = self.__get_key("Manual mode")
 
                     if self.__sound_signals:
-                        self.__beeper.beep(1, 0.1)
+                        self.__buzzer.beep(1, 0.1)
 
                     if self.__debug:
                         print("Receiver: Mode changed to \"Manual\"")
@@ -117,7 +117,7 @@ class IR_Receiver:
                         self.__clear_queue()
 
                         if self.__sound_signals:
-                            self.__beeper.beep(1, 0.3)
+                            self.__buzzer.beep(1, 0.3)
 
                         continue
 
@@ -126,7 +126,7 @@ class IR_Receiver:
                         self.__command_queue.put(reading.value)
 
                         if self.__sound_signals:
-                            self.__beeper.beep(1, 0.1)
+                            self.__buzzer.beep(1, 0.1)
 
                         if self.__debug:
                             print("Receiver: Key added to the queue:", reading.value)
