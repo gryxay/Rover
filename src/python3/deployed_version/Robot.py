@@ -4,6 +4,7 @@ from IR_Receiver import IR_Receiver
 from Buzzer import Buzzer
 from Map import Map
 
+from Constants import Robot_Constants
 from Constants import Drivetrain_Constants
 from Constants import Map_Constants
 
@@ -20,17 +21,26 @@ class Robot():
     __debug = None
 
     def __init__(self, imu_auto_calibrate = True, sound_signals = True, debug = False):
+        '''
         self.__sound_signals = sound_signals
         self.__debug = debug
 
         self.__drivetrain = Drivetrain(imu_auto_calibrate = imu_auto_calibrate, debug = self.__debug)
-        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+        self.__remote_receiver = IR_Recebuzzer = sebuzzer, sound_signals = self.__sound_signals, debug = self.__debug)
 
         if sound_signals:
-            self.__buzzer.beep(3, 0.1)
+            sebuzzer.beep(3, 0.1)
 
         # Listen to remote for commands
         self.__listen_to_remote()
+        '''
+        self.__map.add_tile(3, 0, is_obstacle = True)
+        self.__map.add_tile(-5, 0, is_obstacle = True)
+        self.__map.add_tile(0, 6, times_visited = 1)
+        self.__map.add_tile(-6, 0, times_visited = 1)
+        self.__map.add_tile(0, -4, times_visited = 1)
+
+        print(self.__get_least_visited_sides(self.__get_clear_sides()))
 
 
     def __listen_to_remote(self):
@@ -142,6 +152,46 @@ class Robot():
     def __turn(self, direction):
         self.__drivetrain.strict_turn(direction)
         self.__map.update_orientation(direction)
+
+
+    # Todo
+    def __get_action(self):
+        current_tile_times_visited = self.__map.get_current_tile.get_times_visited()
+        possible_directions = self.__get_least_visited_sides(self.__get_clear_sides)
+
+        if len(possible_directions) >= 0:
+            print("TODO")
+
+        else:
+            return None
+
+
+    def __get_clear_sides(self):
+        clear_sides = []
+
+        for direction in Robot_Constants.DIRECTIONS:
+            contains_obstacles = self.__map.check_for_obstacles(direction)
+
+            if not contains_obstacles:
+                clear_sides.append(direction)
+
+        return clear_sides
+
+
+    def __get_least_visited_sides(self, directions):
+        side_data = {}
+
+        for direction in directions:
+            side_data[direction] = self.__map.check_visited_tiles(direction)
+
+        min_times_visited = min(side_data.values())
+        least_visited_sides = []
+
+        for direction, times_visited in side_data.items():
+            if times_visited == min_times_visited:
+                least_visited_sides.append(direction)
+
+        return least_visited_sides
 
 
 if __name__ == "__main__":
