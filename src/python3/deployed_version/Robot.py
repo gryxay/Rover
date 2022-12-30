@@ -21,26 +21,17 @@ class Robot():
     __debug = None
 
     def __init__(self, imu_auto_calibrate = True, sound_signals = True, debug = False):
-        '''
         self.__sound_signals = sound_signals
         self.__debug = debug
 
         self.__drivetrain = Drivetrain(imu_auto_calibrate = imu_auto_calibrate, debug = self.__debug)
-        self.__remote_receiver = IR_Recebuzzer = sebuzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
 
         if sound_signals:
-            sebuzzer.beep(3, 0.1)
+            self.__buzzer.beep(3, 0.1)
 
         # Listen to remote for commands
         self.__listen_to_remote()
-        '''
-        self.__map.add_tile(3, 0, is_obstacle = True)
-        self.__map.add_tile(-5, 0, is_obstacle = True)
-        self.__map.add_tile(0, 6, times_visited = 1)
-        self.__map.add_tile(-6, 0, times_visited = 1)
-        self.__map.add_tile(0, -4, times_visited = 1)
-
-        print(self.__get_least_visited_sides(self.__get_clear_sides()))
 
 
     def __listen_to_remote(self):
