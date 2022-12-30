@@ -256,8 +256,14 @@ class IR_Receiver_Constants:
 
 class Map_Constants:
     TILE_SIZE = 6
+
     VISION_RANGE = 3
     OBSTACLE_CHECKING_RANGE = 7
+    VISITED_TILES_CHECKING_RANGE = 5
+
+
+class Robot_Constants:
+    DIRECTIONS = ['f', 'b', 'l', 'r']
 
 
 class Sensing_System_Constants:
