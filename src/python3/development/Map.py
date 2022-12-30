@@ -752,41 +752,42 @@ class Map:
 
     # Returns True if there are tiles in the specified direction with 
     # tile.get_times_visited() >= self.__get_tile(self.get_current_x_position(), self.get_current_y_position()).get_times_visited()
-    def check_visited_tiles(self, direction) -> bool:
-        current_tile_times_visited = self.__get_tile(self.get_current_x_position(), self.get_current_y_position()).get_times_visited()
+    def check_visited_tiles(self, direction) -> int:
+        max_times_visited = 0
+
 
         if direction == 'f':
             if self.__orientation == 'N':
                 for x in range(self.get_current_x_position() - 1, self.get_current_x_position() + 2):
-                    for y in range(self.get_current_y_position() + 4, self.get_current_y_position() + 4 + Map_Constants.OBSTACLE_CHECKING_RANGE):
+                    for y in range(self.get_current_y_position() + 4, self.get_current_y_position() + 4 + Map_Constants.VISITED_TILES_CHECKING_RANGE):
                         tile = self.__get_tile(x, y)
 
-                        if tile and tile.get_times_visited() >= current_tile_times_visited:
-                            return True
+                        if tile and tile.get_times_visited() > max_times_visited:
+                            max_times_visited = tile.get_times_visited()
 
             elif self.__orientation == 'E':
-                for x in range(self.get_current_x_position() + 4, self.get_current_x_position() + 4 + Map_Constants.OBSTACLE_CHECKING_RANGE):
+                for x in range(self.get_current_x_position() + 4, self.get_current_x_position() + 4 + Map_Constants.VISITED_TILES_CHECKING_RANGE):
                     for y in range(self.get_current_y_position() - 1, self.get_current_y_position() + 2):
                         tile = self.__get_tile(x, y)
 
-                        if tile and tile.get_times_visited() >= current_tile_times_visited:
-                            return True
+                        if tile and tile.get_times_visited() > max_times_visited:
+                            max_times_visited = tile.get_times_visited()
 
             elif self.__orientation == 'S':
                 for x in range(self.get_current_x_position() - 1, self.get_current_x_position() + 2):
-                    for y in range(self.get_current_y_position() - 3 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_y_position() - 3):
+                    for y in range(self.get_current_y_position() - 3 - Map_Constants.VISITED_TILES_CHECKING_RANGE, self.get_current_y_position() - 3):
                         tile = self.__get_tile(x, y)
 
-                        if tile and tile.get_times_visited() >= current_tile_times_visited:
-                            return True
+                        if tile and tile.get_times_visited() > max_times_visited:
+                            max_times_visited = tile.get_times_visited()
 
             elif self.__orientation == 'W':
-                for x in range(self.get_current_x_position() - 3 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_x_position() - 3):
+                for x in range(self.get_current_x_position() - 3 - Map_Constants.VISITED_TILES_CHECKING_RANGE, self.get_current_x_position() - 3):
                     for y in range(self.get_current_y_position() - 1, self.get_current_y_position() + 2):
                         tile = self.__get_tile(x, y)
 
-                        if tile and tile.get_times_visited() >= current_tile_times_visited:
-                            return True
+                        if tile and tile.get_times_visited() > max_times_visited:
+                            max_times_visited = tile.get_times_visited()
 
         
         elif (direction == 'b' and self.__orientation == 'N') or \
@@ -794,23 +795,23 @@ class Map:
              (direction == 'r' and self.__orientation == 'E'):
 
              for x in range(self.get_current_x_position() - 1, self.get_current_x_position() + 2):
-                for y in range(self.get_current_y_position() - 1 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_y_position() - 1):
+                for y in range(self.get_current_y_position() - 1 - Map_Constants.VISITED_TILES_CHECKING_RANGE, self.get_current_y_position() - 1):
                     tile = self.__get_tile(x, y)
 
-                    if tile and tile.get_times_visited() >= current_tile_times_visited:
-                        return True
+                    if tile and tile.get_times_visited() > max_times_visited:
+                            max_times_visited = tile.get_times_visited()
 
 
         elif (direction == 'b' and self.__orientation == 'E') or \
              (direction == 'l' and self.__orientation == 'N') or \
              (direction == 'r' and self.__orientation == 'S'):
 
-             for x in range(self.get_current_x_position() - 1 - Map_Constants.OBSTACLE_CHECKING_RANGE, self.get_current_x_position() - 1):
+             for x in range(self.get_current_x_position() - 1 - Map_Constants.VISITED_TILES_CHECKING_RANGE, self.get_current_x_position() - 1):
                 for y in range(self.get_current_y_position() - 1, self.get_current_y_position() + 2):
                     tile = self.__get_tile(x, y)
 
-                    if tile and tile.get_times_visited() >= current_tile_times_visited:
-                        return True
+                    if tile and tile.get_times_visited() > max_times_visited:
+                            max_times_visited = tile.get_times_visited()
         
 
         elif (direction == 'b' and self.__orientation == 'S') or \
@@ -818,26 +819,26 @@ class Map:
              (direction == 'r' and self.__orientation == 'W'):
 
              for x in range(self.get_current_x_position() - 1, self.get_current_x_position() + 2):
-                for y in range(self.get_current_y_position() + 2, self.get_current_y_position() + 2 + Map_Constants.OBSTACLE_CHECKING_RANGE):
+                for y in range(self.get_current_y_position() + 2, self.get_current_y_position() + 2 + Map_Constants.VISITED_TILES_CHECKING_RANGE):
                     tile = self.__get_tile(x, y)
 
-                    if tile and tile.get_times_visited() >= current_tile_times_visited:
-                        return True
+                    if tile and tile.get_times_visited() > max_times_visited:
+                            max_times_visited = tile.get_times_visited()
 
 
         elif (direction == 'b' and self.__orientation == 'W') or \
              (direction == 'l' and self.__orientation == 'S') or \
              (direction == 'r' and self.__orientation == 'N'):
 
-            for x in range(self.get_current_x_position() + 2, self.get_current_x_position() + 2 + Map_Constants.OBSTACLE_CHECKING_RANGE):
+            for x in range(self.get_current_x_position() + 2, self.get_current_x_position() + 2 + Map_Constants.VISITED_TILES_CHECKING_RANGE):
                 for y in range(self.get_current_y_position() - 1, self.get_current_y_position() + 2):
                     tile = self.__get_tile(x, y)
 
-                    if tile and tile.get_times_visited() >= current_tile_times_visited:
-                        return True
+                    if tile and tile.get_times_visited() > max_times_visited:
+                            max_times_visited = tile.get_times_visited()
         
         
-        return False
+        return max_times_visited
 
 
     def get_shortest_path(self) -> list:
@@ -916,3 +917,28 @@ class Map:
                 self.display_tile(x, y)
 
             print()
+
+# test
+def get_clear_sides(map):
+        directions = ['f', 'b', 'l', 'r']
+        clear_sides = []
+
+        for direction in directions:
+            contains_obstacles = map.check_for_obstacles(direction)
+
+            if not contains_obstacles:
+                clear_sides.append(direction)
+
+        return clear_sides
+
+
+if __name__ == "__main__":
+    map = Map()
+    
+    map.add_tile(6, -1, times_visited = 2)
+    map.add_tile(7, 1, times_visited = 3)
+
+    #print(map.check_visited_tiles('r'))
+
+    #map.display_map()
+    print(get_clear_sides(map))
