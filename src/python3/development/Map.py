@@ -438,119 +438,112 @@ class Map:
         return self.__map[str(self.get_current_x_position()) + "," + str(self.get_current_y_position())]
 
     
-    def update_position(self):
-        if self.__orientation == 'N':
-            self.__current_tile_position[1] += 1
+    def update_position(self, direction):
+        if self.__orientation == 'N' or self.__orientation == 'S':
+            min_x_range = self.get_current_x_position() - 1
+            max_x_range = self.get_current_x_position() + 2
 
-            min_range = self.get_current_x_position() - 1
-            max_range = self.get_current_x_position() + 2
+            y_axis_to_mark = None
+            y_axis_to_unmark = None
 
-            # Moving robot-representing tiles to the front
-            y = self.get_current_y_position() + 3
+            if self.__orientation == 'N':
+                if direction == 'f':
+                    self.__current_tile_position[1] += 1
 
-            for x in range(min_range, max_range):
-                tile = self.__get_tile(x, y)
+                    y_axis_to_mark = self.get_current_y_position() + 3
+                    y_axis_to_unmark = self.get_current_y_position() - 2
 
-                if tile:
-                    tile.increment_times_visited()
-                    tile.is_under_robot = True
+                elif direction == 'b':
+                    self.__current_tile_position[1] -= 1
 
-                else:
-                    self.add_tile(x, y, times_visited = 1, is_known = True, is_under_robot = True) 
-            
-            # Removing robot-representing tiles from the back
-            y = self.get_current_y_position() - 2
+                    y_axis_to_mark = self.get_current_y_position() - 1
+                    y_axis_to_unmark = self.get_current_y_position() + 4
 
-            for x in range(min_range, max_range):
-                tile = self.__get_tile(x, y)
 
-                if tile:
-                    tile.is_under_robot = False
+            elif self.__orientation == 'S':
+                if direction == 'f':
+                    self.__current_tile_position[1] -= 1
 
-        elif self.__orientation == 'E':
-            self.__current_tile_position[0] += 1
+                    y_axis_to_mark = self.get_current_y_position() - 3
+                    y_axis_to_unmark = self.get_current_y_position() + 2
 
-            min_range = self.get_current_y_position() - 1
-            max_range = self.get_current_y_position() + 2
+                elif direction == 'b':
+                    self.__current_tile_position[1] += 1
 
-            # Moving robot-representing tiles to the front
-            x = self.get_current_x_position() + 3
+                    y_axis_to_mark = self.get_current_y_position() + 1
+                    y_axis_to_unmark = self.get_current_y_position() - 4
 
-            for y in range(min_range, max_range):
-                tile = self.__get_tile(x, y)
 
-                if tile:
-                    tile.increment_times_visited()
-                    tile.is_under_robot = True
+            for x in range(min_x_range, max_x_range):
+                tile_to_mark = self.__get_tile(x, y_axis_to_mark)
+                tile_to_unmark = self.__get_tile(x, y_axis_to_unmark)
 
-                else:
-                    self.add_tile(x, y, times_visited = 1, is_known = True, is_under_robot = True) 
-            
-            # Removing robot-representing tiles from the back
-            x = self.get_current_x_position() - 2
-
-            for y in range(min_range, max_range):
-                tile = self.__get_tile(x, y)
-
-                if tile:
-                    tile.is_under_robot = False
-
-        elif self.__orientation == 'S':
-            self.__current_tile_position[1] -= 1
-
-            min_range = self.get_current_x_position() - 1
-            max_range = self.get_current_x_position() + 2
-
-            # Moving robot-representing tiles to the front
-            y = self.get_current_y_position() - 3
-
-            for x in range(min_range, max_range):
-                tile = self.__get_tile(x, y)
-
-                if tile:
-                    tile.increment_times_visited()
-                    tile.is_under_robot = True
+                # Setting is_under_robot to True, because the Robot has moved and is "on" the tile
+                if tile_to_mark:
+                    tile_to_mark.increment_times_visited()
+                    tile_to_mark.is_under_robot = True
 
                 else:
-                    self.add_tile(x, y, times_visited = 1, is_known = True, is_under_robot = True) 
-            
-            # Removing robot-representing tiles from the back
-            y = self.get_current_y_position() + 2
+                    self.add_tile(x, y_axis_to_mark, times_visited = 1, is_known = True, is_under_robot = True) 
 
-            for x in range(min_range, max_range):
-                tile = self.__get_tile(x, y)
 
-                if tile:
-                    tile.is_under_robot = False
+                # Setting is_under_robot to False, because the Robot has moved and is no longer "on" the tile
+                if tile_to_unmark:
+                    tile_to_unmark.is_under_robot = False
 
-        elif self.__orientation == 'W':
-            self.__current_tile_position[0] -= 1
 
-            min_range = self.get_current_y_position() - 1
-            max_range = self.get_current_y_position() + 2
+        elif self.__orientation == 'W' or self.__orientation == 'E':
+            min_y_range = self.get_current_y_position() - 1
+            max_y_range = self.get_current_y_position() + 2
 
-            # Moving robot-representing tiles to the front
-            x = self.get_current_x_position() - 3
+            x_axis_to_mark = None
+            x_axis_to_unmart = None
 
-            for y in range(min_range, max_range):
-                tile = self.__get_tile(x, y)
+            if self.__orientation == 'W':
+                if direction == 'f':
+                    self.__current_tile_position[0] -= 1
 
-                if tile:
-                    tile.increment_times_visited()
-                    tile.is_under_robot = True
+                    x_axis_to_mark = self.get_current_x_position() - 3
+                    x_axis_to_unmark = self.get_current_x_position() + 2
+
+                elif direction == 'b':
+                    self.__current_tile_position[0] += 1
+
+                    x_axis_to_mark = self.get_current_x_position() + 1
+                    x_axis_to_unmark = self.get_current_x_position() - 4
+
+
+            elif self.__orientation == 'E':
+                if direction == 'f':
+                    self.__current_tile_position[0] += 1
+
+                    x_axis_to_mark = self.get_current_x_position() + 3
+                    x_axis_to_unmark = self.get_current_x_position() - 2
+
+                elif direction == 'b':
+                    self.__current_tile_position[0] -= 1
+
+                    x_axis_to_mark = self.get_current_x_position() - 1
+                    x_axis_to_unmark = self.get_current_x_position() + 4
+
+
+            for y in range(min_y_range, max_y_range):
+                tile_to_mark = self.__get_tile(x_axis_to_mark, y)
+                tile_to_unmark = self.__get_tile(x_axis_to_unmark, y)
+
+                # Setting is_under_robot to True, because the Robot has moved and is "on" the tile
+                if tile_to_mark:
+                    tile_to_mark.increment_times_visited()
+                    tile_to_mark.is_under_robot = True
 
                 else:
-                    self.add_tile(x, y, times_visited = 1, is_known = True, is_under_robot = True) 
-            
-            # Removing robot-representing tiles from the back
-            x = self.get_current_x_position() + 2
+                    self.add_tile(x_axis_to_mark, y, times_visited = 1, is_known = True, is_under_robot = True) 
 
-            for y in range(min_range, max_range):
-                tile = self.__get_tile(x, y)
 
-                if tile:
-                    tile.is_under_robot = False
-
+                # Setting is_under_robot to False, because the Robot has moved and is no longer "on" the tile
+                if tile_to_unmark:
+                    tile_to_unmark.is_under_robot = False
+                
 
     def update_map(self, sensor_data):
         if self.__orientation == 'N':
@@ -917,28 +910,3 @@ class Map:
                 self.display_tile(x, y)
 
             print()
-
-# test
-def get_clear_sides(map):
-        directions = ['f', 'b', 'l', 'r']
-        clear_sides = []
-
-        for direction in directions:
-            contains_obstacles = map.check_for_obstacles(direction)
-
-            if not contains_obstacles:
-                clear_sides.append(direction)
-
-        return clear_sides
-
-
-if __name__ == "__main__":
-    map = Map()
-    
-    map.add_tile(6, -1, times_visited = 2)
-    map.add_tile(7, 1, times_visited = 3)
-
-    #print(map.check_visited_tiles('r'))
-
-    #map.display_map()
-    print(get_clear_sides(map))
