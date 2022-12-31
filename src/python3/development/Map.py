@@ -482,6 +482,7 @@ class Map:
                 if tile_to_mark:
                     tile_to_mark.increment_times_visited()
                     tile_to_mark.is_under_robot = True
+                    tile_to_mark.is_obstacle = False
 
                 else:
                     self.add_tile(x, y_axis_to_mark, times_visited = 1, is_known = True, is_under_robot = True) 
@@ -535,6 +536,7 @@ class Map:
                 if tile_to_mark:
                     tile_to_mark.increment_times_visited()
                     tile_to_mark.is_under_robot = True
+                    tile_to_mark.is_obstacle = False
 
                 else:
                     self.add_tile(x_axis_to_mark, y, times_visited = 1, is_known = True, is_under_robot = True) 
@@ -743,7 +745,7 @@ class Map:
         
         return False
 
-    # Returns True if there are tiles in the specified direction with 
+
     def check_visited_tiles(self, direction) -> int:
         max_times_visited = 0
 
