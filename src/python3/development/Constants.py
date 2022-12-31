@@ -263,6 +263,7 @@ class Map_Constants:
 
 
 class Robot_Constants:
+    # 'f' = front, 'b' = back, 'l' = left, 'r' = right
     DIRECTIONS = ['f', 'b', 'l', 'r']
 
 
