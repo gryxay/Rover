@@ -1,4 +1,7 @@
+import random
+
 from Drivetrain import Drivetrain
+from Computer_Vision import Computer_Vision
 from Sensing_System import Sensing_System
 from IR_Receiver import IR_Receiver
 from Buzzer import Buzzer
@@ -12,6 +15,7 @@ from Constants import Map_Constants
 # In development
 class Robot():
     __drivetrain = None
+    #__computer_vision = Computer_Vision()
     __sensing_system = Sensing_System()
     __remote_receiver = None
     __buzzer = Buzzer()
@@ -19,6 +23,7 @@ class Robot():
 
     __sound_signals = None
     __debug = None
+
 
     def __init__(self, imu_auto_calibrate = True, sound_signals = True, debug = False):
         self.__sound_signals = sound_signals
@@ -30,6 +35,7 @@ class Robot():
         if sound_signals:
             self.__buzzer.beep(3, 0.1)
 
+
         # Listen to remote for commands
         self.__listen_to_remote()
 
@@ -37,6 +43,7 @@ class Robot():
     def __listen_to_remote(self):
         if self.__debug:
             print("Robot: Listening to remote")
+
 
         while True:
             if self.__remote_receiver.is_start_button_pressed():
@@ -46,7 +53,7 @@ class Robot():
                 elif self.__remote_receiver.get_mode() == "Manual mode":
                     self.__manual_mode()
     
-    #
+    
     def __autonomous_mode(self):
         while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Autonomous mode":
             command = self.__remote_receiver.get_command()
@@ -55,7 +62,7 @@ class Robot():
                 if self.__debug:
                     print("Task \"Explore\" is being executed")
 
-                self.__explore()
+                self.__explore_v2()
 
             elif command == "Find a bottle": 
                 if self.__debug:
@@ -76,13 +83,13 @@ class Robot():
         while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Manual mode":
             if self.__remote_receiver.get_last_key_press() == "Forward":
                 while self.__sensing_system.is_front_clear() and self.__remote_receiver.get_last_key_press() == "Forward":
-                    self.__drivetrain.rotate('f')
+                    self.__drive('f')
                 
                 self.__remote_receiver.reset_last_key_press()
 
             elif self.__remote_receiver.get_last_key_press() == "Backward":
                 while self.__sensing_system.is_back_clear() and self.__remote_receiver.get_last_key_press() == "Backward":
-                    self.__drivetrain.rotate('b')
+                    self.__drive('b')
 
                 self.__remote_receiver.reset_last_key_press()
 
@@ -94,10 +101,13 @@ class Robot():
                 self.__turn('r')
                 self.__remote_receiver.reset_last_key_press()
 
+
+        self.__map.display_map()
         self.__drivetrain.toggle_power(False)
 
-    #
-    def __explore(self):
+
+    # Old version
+    def __explore_v1(self):
         self.__drivetrain.toggle_power(True)
 
         while self.__remote_receiver.is_start_button_pressed():
@@ -119,25 +129,97 @@ class Robot():
                 self.__turn('l')
                 self.__turn('l')
 
+
         self.__drivetrain.toggle_power(False)
         self.__map.display_map()
 
-    #
-    def __find_object(self, object):
-        print("Not implemented yet!")
 
-    #
+    # New version
+    # Not finished
+    def __explore_v2(self):
+        self.__drivetrain.toggle_power(True)
+
+        while self.__remote_receiver.is_start_button_pressed():
+            self.__map.update_map(self.__sensing_system.get_sensor_data())
+
+            action = self.__get_action()
+
+            if action == 'f' or action == 'b':
+                self.__drive(action)
+
+            elif action == 'l' or action == 'r':
+                self.__turn(action)
+
+            elif action is None:
+                # TODO 
+                '''
+                Create a function that checks if obstacles are still present by driving forwards 
+                and bacwards a couple times before signaling the user that it's stuck
+                '''
+    
+                print("Dude, I'm stuck!")
+
+
+        self.__drivetrain.toggle_power(False)
+        self.__map.display_map()
+
+
+    # Not finished
+    def __find_object(self, object):
+        self.__drivetrain.toggle_power(True)
+
+        while self.__remote_receiver.is_start_button_pressed() and self.__computer_vision.get_last_detected_object() != object:
+            self.__map.update_map(self.__sensing_system.get_sensor_data())
+
+            action = self.__get_action()
+
+            if action == 'f' or action == 'b':
+                self.__drive(action)
+
+            elif action == 'l' or action == 'r':
+                self.__turn(action)
+
+            elif action is None:
+                # TODO 
+                '''
+                Create a function that checks if obstacles are still present by driving forwards 
+                and bacwards a couple times before signaling the user that it's stuck
+                '''
+    
+                print("Dude, I'm stuck!")
+
+
+        self.__drivetrain.toggle_power(False)
+        self.__computer_vision.reset_last_detected_object()
+
+        # Do something (signal the user, play a short melody, etc...)
+
+
+    # TODO
     def __return_to_home(self):
         print("Not implemented yet!")
 
-    #
-    def __move_forward(self):
-        for _ in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
-            if self.__sensing_system.is_front_clear():
-                self.__drivetrain.rotate('f')
 
-            else:
-                break
+    def __drive(self, direction):
+        if direction == 'f':
+            for _ in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
+                if self.__sensing_system.is_front_clear():
+                    self.__drivetrain.rotate(direction)
+
+                else:
+                    break
+
+
+        elif direction == 'b':
+            for _ in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
+                if self.__sensing_system.is_back_clear():
+                    self.__drivetrain.rotate(direction)
+
+                else:
+                    break
+
+
+        self.__map.update_position(direction)
 
     
     def __turn(self, direction):
@@ -145,13 +227,28 @@ class Robot():
         self.__map.update_orientation(direction)
 
 
-    # Todo
     def __get_action(self):
-        current_tile_times_visited = self.__map.get_current_tile.get_times_visited()
-        possible_directions = self.__get_least_visited_sides(self.__get_clear_sides)
+        # Least visited clear direction or multiple clear directions that have been visited the same amount of times
+        possible_directions = self.__get_least_visited_sides(self.__get_clear_sides())
 
-        if len(possible_directions) >= 0:
-            print("TODO")
+        if 'f' in possible_directions:
+            return 'f'
+
+        elif 'l' in possible_directions and 'r' in possible_directions:
+            if random.choice([0, 1]) == 0:
+                return 'l'
+
+            else:
+                return 'r'
+
+        elif 'l' in possible_directions:
+            return 'l'
+
+        elif 'r' in possible_directions:
+            return 'r'
+
+        elif 'b' in possible_directions:
+            return 'b'
 
         else:
             return None
@@ -161,9 +258,7 @@ class Robot():
         clear_sides = []
 
         for direction in Robot_Constants.DIRECTIONS:
-            contains_obstacles = self.__map.check_for_obstacles(direction)
-
-            if not contains_obstacles:
+            if not self.__map.check_for_obstacles(direction):
                 clear_sides.append(direction)
 
         return clear_sides
