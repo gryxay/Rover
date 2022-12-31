@@ -55,26 +55,16 @@ class Drivetrain:
 		self.__imu = IMU(auto_calibrate = imu_auto_calibrate, debug = self.__debug)
 
 
-	def rotate(self, direction):
-		if direction == 'f':
-			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
-			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
+	def __drive(self, direction, distance_cm, speed):
+		delay = None
 
-		elif direction == 'b':
-			GPIO.output(self.__dir_pin_1, GPIO.LOW)
-			GPIO.output(self.__dir_pin_2, GPIO.LOW)
+		if speed == "fast":
+			delay = Drivetrain_Constants.FAST_DRIVING_DELAY
 
-
-		GPIO.output(self.__step_pin_1, GPIO.HIGH)
-		GPIO.output(self.__step_pin_2, GPIO.HIGH)
-		sleep(Drivetrain_Constants.DRIVING_DELAY)
-
-		GPIO.output(self.__step_pin_1, GPIO.LOW)
-		GPIO.output(self.__step_pin_2, GPIO.LOW)
-		sleep(Drivetrain_Constants.DRIVING_DELAY)
+		elif speed == "slow":
+			delay = Drivetrain_Constants.SLOW_DRIVING_DELAY
 
 
-	def __drive(self, direction, motor_steps, delay = Drivetrain_Constants.DRIVING_DELAY):
 		if direction == 'f':
 			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
 			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
@@ -84,7 +74,7 @@ class Drivetrain:
 			GPIO.output(self.__dir_pin_2, GPIO.LOW)
 	
 
-		for i in range(motor_steps):
+		for i in range(round(distance_cm * Drivetrain_Constants.CM)):
 			GPIO.output(self.__step_pin_1, GPIO.HIGH)
 			GPIO.output(self.__step_pin_2, GPIO.HIGH)
 
@@ -96,10 +86,37 @@ class Drivetrain:
 			sleep(delay)
 
 
+	def rotate(self, direction, speed):
+		delay = None
+
+		if speed == "fast":
+			delay = Drivetrain_Constants.FAST_DRIVING_DELAY
+
+		elif speed == "slow":
+			delay = Drivetrain_Constants.SLOW_DRIVING_DELAY
+
+
+		if direction == 'f':
+			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
+			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
+
+		elif direction == 'b':
+			GPIO.output(self.__dir_pin_1, GPIO.LOW)
+			GPIO.output(self.__dir_pin_2, GPIO.LOW)
+
+
+		GPIO.output(self.__step_pin_1, GPIO.HIGH)
+		GPIO.output(self.__step_pin_2, GPIO.HIGH)
+		sleep(delay)
+
+		GPIO.output(self.__step_pin_1, GPIO.LOW)
+		GPIO.output(self.__step_pin_2, GPIO.LOW)
+		sleep(delay)
+
+
 	# Works for turns up to 360 degrees
 	def turn(self, direction, degrees):
 		turning_offset = (degrees % 360.0) / 30
-
 
 		if direction == 'l':
 			GPIO.output(self.__dir_pin_1, GPIO.LOW)
@@ -133,16 +150,11 @@ class Drivetrain:
 	def strict_turn(self, direction):
 		turning_offset = Drivetrain_Constants.STRICT_TURN_TURNING_OFFSET
 
-
 		if direction == 'l':
-			self.__drive('f', \
-						 round(Drivetrain_Constants.LEFT_STRICT_TURN_FORWARD_OFFSET * Drivetrain_Constants.CM), \
-						 Drivetrain_Constants.STRICT_TURN_DRIVING_DELAY)
+			self.__drive('f', Drivetrain_Constants.LEFT_STRICT_TURN_FORWARD_OFFSET, "slow")
 
 		elif direction == 'r':
-			self.__drive('f', \
-						 round(Drivetrain_Constants.RIGHT_STRICT_TURN_FORWARD_OFFSET * Drivetrain_Constants.CM), \
-						 Drivetrain_Constants.STRICT_TURN_DRIVING_DELAY)
+			self.__drive('f', Drivetrain_Constants.RIGHT_STRICT_TURN_FORWARD_OFFSET, "slow")
 
 
 		if direction == 'l':
@@ -175,14 +187,10 @@ class Drivetrain:
 
 
 		if direction == 'l':
-			self.__drive('b', \
-						 round(Drivetrain_Constants.LEFT_STRICT_TURN_BACKWARD_OFFSET * Drivetrain_Constants.CM), \
-						 Drivetrain_Constants.STRICT_TURN_DRIVING_DELAY)
+			self.__drive('b', Drivetrain_Constants.LEFT_STRICT_TURN_BACKWARD_OFFSET, "slow")
 
 		elif direction == 'r':
-			self.__drive('b', \
-						 round(Drivetrain_Constants.RIGHT_STRICT_TURN_BACKWARD_OFFSET * Drivetrain_Constants.CM), \
-						 Drivetrain_Constants.STRICT_TURN_DRIVING_DELAY)
+			self.__drive('b', Drivetrain_Constants.RIGHT_STRICT_TURN_BACKWARD_OFFSET, "slow")
 
 
 	def toggle_power(self, is_on):

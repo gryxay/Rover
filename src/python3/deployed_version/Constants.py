@@ -200,7 +200,8 @@ class Drivetrain_Constants:
     CM = 132
 
     # Time between signal pulses when driving
-    DRIVING_DELAY = 0.0001
+    FAST_DRIVING_DELAY = 0.0001
+    SLOW_DRIVING_DELAY = 0.0005
 
     # Time between signal pulses when turning
     TURNING_DELAY = 0.00075
@@ -208,8 +209,6 @@ class Drivetrain_Constants:
     # strict_turn() constants
     STRICT_TURN_TURNING_ANGLE = 90
     STRICT_TURN_TURNING_OFFSET = 3
-
-    STRICT_TURN_DRIVING_DELAY = 0.0005
 
     LEFT_STRICT_TURN_FORWARD_OFFSET = 2
     LEFT_STRICT_TURN_BACKWARD_OFFSET = 2.5
@@ -235,7 +234,7 @@ class IR_Receiver_Constants:
         "61189": "Find a bottle",
         "61190": "Return to home",
         "61191": "Clear queue",
-        "61192": "Unsigned",
+        "61192": "Play a song",
         "61193": "Unsigned",
         "61194": "Unsigned",
         "61195": "Unsigned",
