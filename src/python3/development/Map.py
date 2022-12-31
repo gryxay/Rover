@@ -744,7 +744,6 @@ class Map:
         return False
 
     # Returns True if there are tiles in the specified direction with 
-    # tile.get_times_visited() >= self.__get_tile(self.get_current_x_position(), self.get_current_y_position()).get_times_visited()
     def check_visited_tiles(self, direction) -> int:
         max_times_visited = 0
 
