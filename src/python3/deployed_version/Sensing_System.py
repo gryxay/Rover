@@ -12,10 +12,10 @@ class Sensing_System:
     __left_sensor = None
     __right_sensor = None
 
-    __front_sensor_last_scan = Value('f', 0.0)
-    __rear_sensor_last_scan = Value('f', 0.0)
-    __left_sensor_last_scan = Value('f', 0.0)
-    __right_sensor_last_scan = Value('f', 0.0)
+    __front_sensor_last_scan = Value('i', 0)
+    __rear_sensor_last_scan = Value('i', 0)
+    __left_sensor_last_scan = Value('i', 0)
+    __right_sensor_last_scan = Value('i', 0)
 
     __background_process = None
 
@@ -41,26 +41,48 @@ class Sensing_System:
 
     def __update_sensor_data(self):
         while True:
-            self.__front_sensor_last_scan.value = self.__front_sensor.get_distance()
-            self.__rear_sensor_last_scan.value = self.__rear_sensor.get_distance()
-            self.__left_sensor_last_scan.value = self.__left_sensor.get_distance()
-            self.__right_sensor_last_scan.value = self.__right_sensor.get_distance()
+            distance = round(self.__front_sensor.get_distance())
+
+            with self.__front_sensor_last_scan.get_lock():
+                self.__front_sensor_last_scan.value = distance
+
+
+            distance = round(self.__rear_sensor.get_distance())
+
+            with self.__rear_sensor_last_scan.get_lock():
+                self.__rear_sensor_last_scan.value = distance
+
+
+            distance = round(self.__left_sensor.get_distance())
+
+            with self.__left_sensor_last_scan.get_lock():
+                self.__left_sensor_last_scan.value = distance
+
+
+            distance = round(self.__right_sensor.get_distance())
+
+            with self.__right_sensor_last_scan.get_lock():
+                self.__right_sensor_last_scan.value = distance
 
 
     def get_front_sensor_distance(self):
-        return self.__front_sensor_last_scan.value
+        with self.__front_sensor_last_scan.get_lock():
+            return self.__front_sensor_last_scan.value
 
 
     def get_rear_sensor_distance(self):
-        return self.__rear_sensor_last_scan.value
+        with self.__rear_sensor_last_scan.get_lock():
+            return self.__rear_sensor_last_scan.value
 
 
     def get_left_sensor_distance(self):
-        return self.__left_sensor_last_scan.value
+        with self.__left_sensor_last_scan.get_lock():
+            return self.__left_sensor_last_scan.value
 
 
     def get_right_sensor_distance(self):
-        return self.__right_sensor_last_scan.value
+        with self.__right_sensor_last_scan.get_lock():
+            return self.__right_sensor_last_scan.value
 
 
     def get_sensor_data(self):
@@ -94,6 +116,4 @@ if __name__ == "__main__":
     sensing_system = Sensing_System()
 
     while True:
-        #print(sensing_system.get_sensor_data())
-        print(sensing_system.is_front_clear())
-        sleep(1)
+        print(sensing_system.get_sensor_data())
