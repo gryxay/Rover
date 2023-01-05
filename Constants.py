@@ -181,9 +181,17 @@ class Buzzer_Constants:
 
 
 class Distance_Sensor_Constants:
+    # cm
+    MAX_READING_DISTANCE = 400
+
+    # cm/s
+    SPEED_OF_SOUND = 34300
+    HALF_SPEED_OF_SOUND = SPEED_OF_SOUND / 2
+
     # Values in seconds
     DELAY = 0.01			
     SIGNAL_LENGTH = 0.00001
+    MAX_TIME_BETWEEN_PULSES = MAX_READING_DISTANCE / HALF_SPEED_OF_SOUND
 
 
 class Drivetrain_Constants:
@@ -281,9 +289,9 @@ class Sensing_System_Constants:
 
     # Values in cm
     MIN_FRONT_DISTANCE = 12 
+    MIN_BACK_DISTANCE = 12
     MIN_LEFT_DISTANCE = 15
     MIN_RIGHT_DISTANCE = 15
-    MIN_BACK_DISTANCE = 12
 
 
 # Author: Geir Istad
