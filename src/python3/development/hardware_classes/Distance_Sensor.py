@@ -19,9 +19,11 @@ class Distance_Sensor:
 		GPIO.setup(echo_pin, GPIO.IN)
 
 
+	# Returns distance in cm (sensor <-> object)
 	def get_distance(self) -> float or None:
 		pulse_start = None
 		pulse_end = None
+
 
 		GPIO.output(self.__trig_pin, GPIO.LOW)
 		sleep(Distance_Sensor_Constants.DELAY)
@@ -31,8 +33,15 @@ class Distance_Sensor:
 
 		GPIO.output(self.__trig_pin, GPIO.LOW)
 
+
+		loop_start = time()
+
 		while GPIO.input(self.__echo_pin) == 0:
 			pulse_start = time()
+
+			# Prevents infinite while loop, that can cause Sensing_System to fail
+			if pulse_start - loop_start > Distance_Sensor_Constants.TIMEOUT:
+				return None
 
 
 		if pulse_start is None:
@@ -42,7 +51,8 @@ class Distance_Sensor:
 		while GPIO.input(self.__echo_pin) == 1:
 			pulse_end = time()
 
-			if pulse_end - pulse_start > Distance_Sensor_Constants.MAX_TIME_BETWEEN_PULSES:
+			# Prevents infinite while loop, that can cause Sensing_System to fail
+			if pulse_end - pulse_start > Distance_Sensor_Constants.TIMEOUT:
 				return None
 
 
