@@ -10,12 +10,12 @@ from Constants import IMU_Constants
 class IMU:
     __mpu = None
 
-    __x_accel_offset = 0
-    __y_accel_offset = 0
-    __z_accel_offset = 0
-    __x_gyro_offset = 0
-    __y_gyro_offset = 0
-    __z_gyro_offset = 0
+    __x_accelerometer_offset = 0
+    __y_accelerometer_offset = 0
+    __z_accelerometer_offset = 0
+    __x_gyroscope_offset = 0
+    __y_gyroscope_offset = 0
+    __z_gyroscope_offset = 0
 
     __roll = Value('f', 0)
     __pitch = Value('f', 0)
@@ -32,31 +32,33 @@ class IMU:
         if auto_calibrate:
             self.__calibrate()
 
-        self.__update_offsets()
+
+        self.__apply_offsets()
 
         if self.__debug:
             print("Initialising IMU:")
         
+
         self.__mpu = MPU6050(IMU_Constants.I2C_BUS, \
                              IMU_Constants.DEVICE_ADDRESS, \
-                             self.__x_accel_offset, \
-                             self.__y_accel_offset, \
-                             self.__z_accel_offset, \
-                             self.__x_gyro_offset, \
-                             self.__y_gyro_offset, \
-                             self.__z_gyro_offset, \
+                             self.__x_accelerometer_offset, \
+                             self.__y_accelerometer_offset, \
+                             self.__z_accelerometer_offset, \
+                             self.__x_gyroscope_offset, \
+                             self.__y_gyroscope_offset, \
+                             self.__z_gyroscope_offset, \
                              self.__debug)
 
         self.__mpu.dmp_initialize()
         self.__mpu.set_DMP_enabled(True)
 
         # Start a process, that constantly updates yaw data in the background
-        self.__background_process = Process(target = self.__update_imu_readings)
+        self.__background_process = Process(target = self.__update_imu_data)
         self.__background_process.start()
 
         # Wait for yaw data to stabilize
         if self.__debug:
-            print("Waiting for positioning system to stabilise yaw value...")
+            print("Waiting for IMU to stabilise yaw value...")
         
         sleep(20)
 
@@ -65,46 +67,54 @@ class IMU:
         if self.__debug:
             print("Calibrating the IMU...")
 
+
         mpu = MPU6050(IMU_Constants.I2C_BUS, \
                       IMU_Constants.DEVICE_ADDRESS, \
                       0, 0, 0, 0, 0, 0, \
                       self.__debug)
     
-        x_accel_offset = 0
-        y_accel_offset = 0
-        z_accel_offset = 0
-        x_gyro_offset = 0
-        y_gyro_offset = 0
-        z_gyro_offset = 0
+
+        x_accelerometer_offset = 0
+        y_accelerometer_offset = 0
+        z_accelerometer_offset = 0
+
+        x_gyroscope_offset = 0
+        y_gyroscope_offset = 0
+        z_gyroscope_offset = 0
+
 
         kp = 0.03125
         ki = 0.25
         kd = 0
 
+
         pidax = SimplePID(0, -15000, 15000, kp, ki, kd, 100, True)
         piday = SimplePID(0, -15000, 15000, kp, ki, kd, 100, True)
         pidaz = SimplePID(0, -15000, 15000, kp, ki, kd, 100, True)
+
         pidgx = SimplePID(0, -15000, 15000, kp, ki, kd, 100, True)
         pidgy = SimplePID(0, -15000, 15000, kp, ki, kd, 100, True)
         pidgz = SimplePID(0, -15000, 15000, kp, ki, kd, 100, True)
 
-        accel_reading = mpu.get_acceleration()
 
-        x_accel_reading = accel_reading[0]
-        y_accel_reading = accel_reading[1]
-        z_accel_reading = accel_reading[2]
+        acceleration_reading = mpu.get_acceleration()
 
-        x_accel_avg = [0]*100
-        y_accel_avg = [0]*100
-        z_accel_avg = [0]*100
+        x_acceleration_reading = acceleration_reading[0]
+        y_acceleration_reading = acceleration_reading[1]
+        z_acceleration_reading = acceleration_reading[2]
 
-        x_accel_offset_avg = [0]*100
-        y_accel_offset_avg = [0]*100
-        z_accel_offset_avg = [0]*100
+        x_acceleration_average = [0]*100
+        y_acceleration_average = [0]*100
+        z_acceleration_average = [0]*100
 
-        axindex = 0
-        ayindex = 0
-        azindex = 0
+        x_accelerometer_offset_average = [0]*100
+        y_accelerometer_offset_average = [0]*100
+        z_accelerometer_offset_average = [0]*100
+
+        acceleration_x_index = 0
+        acceleration_y_index = 0
+        acceleration_z_index = 0
+
 
         gyro_reading = mpu.get_rotation()
 
@@ -112,173 +122,198 @@ class IMU:
         y_gyro_reading = gyro_reading[1]
         z_gyro_reading = gyro_reading[2]
 
-        x_gyro_avg = [0]*100
-        y_gyro_avg = [0]*100
-        z_gyro_avg = [0]*100
+        x_gyro_average = [0]*100
+        y_gyro_average = [0]*100
+        z_gyro_average = [0]*100
 
-        x_gyro_offset_avg = [0]*100
-        y_gyro_offset_avg = [0]*100
-        z_gyro_offset_avg = [0]*100
+        x_gyroscope_offset_average = [0]*100
+        y_gyroscope_offset_average = [0]*100
+        z_gyroscope_offset_average = [0]*100
 
-        gxindex = 0
-        gyindex = 0
-        gzindex = 0
+        gyro_x_index = 0
+        gyro_y_index = 0
+        gyro_z_index = 0
+        
+        passthroughs = 0
 
-        reading_count = 0
+        while passthroughs < IMU_Constants.CALIBRATION_PASSTHROUGHS:
+            acceleration_reading = mpu.get_acceleration()
 
-        try:
-            while reading_count < 3:
-                accel_reading = mpu.get_acceleration()
-                x_accel_reading = accel_reading[0]
-                y_accel_reading = accel_reading[1]
-                z_accel_reading = accel_reading[2]
+            x_acceleration_reading = acceleration_reading[0]
+            y_acceleration_reading = acceleration_reading[1]
+            z_acceleration_reading = acceleration_reading[2]
 
-                gyro_reading = mpu.get_rotation()
-                x_gyro_reading = gyro_reading[0]
-                y_gyro_reading = gyro_reading[1]
-                z_gyro_reading = gyro_reading[2]
 
-                if pidax.check_time():
-                    x_accel_offset = pidax.get_output_value(x_accel_reading)
+            gyro_reading = mpu.get_rotation()
 
-                    mpu.set_x_accel_offset(int(x_accel_offset))
+            x_gyro_reading = gyro_reading[0]
+            y_gyro_reading = gyro_reading[1]
+            z_gyro_reading = gyro_reading[2]
 
-                    x_accel_avg[axindex] = x_accel_reading
-                    x_accel_offset_avg[axindex] = x_accel_offset
+        
+            if pidax.check_time():
+                x_accelerometer_offset = pidax.get_output_value(x_acceleration_reading)
 
-                    axindex += 1
+                mpu.set_x_accel_offset(int(x_accelerometer_offset))
 
-                    if axindex == len(x_accel_avg):
-                        axindex = 0
-                        
-                        if self.__debug:
-                            print('x_accel_avg_read: ' +
-                                str(self.__array_average(x_accel_avg)) +
-                                ' x_accel_avg_offset: ' +
-                                str(self.__array_average(x_accel_offset_avg)))
-                            print('y_accel_avg_read: ' +
-                                str(self.__array_average(y_accel_avg)) +
-                                ' y_accel_avg_offset: ' +
-                                str(self.__array_average(y_accel_offset_avg)))
-                            print('z_accel_avg_read: ' +
-                                str(self.__array_average(z_accel_avg)) +
-                                ' z_accel_avg_offset: ' +
-                                str(self.__array_average(z_accel_offset_avg)))
-                        
-                if piday.check_time():
-                    y_accel_offset = piday.get_output_value(y_accel_reading)
+                x_acceleration_average[acceleration_x_index] = x_acceleration_reading
+                x_accelerometer_offset_average[acceleration_x_index] = x_accelerometer_offset
 
-                    mpu.set_y_accel_offset(int(y_accel_offset))
-
-                    y_accel_avg[ayindex] = y_accel_reading
-                    y_accel_offset_avg[ayindex] = y_accel_offset
-
-                    ayindex += 1
-
-                    if ayindex == len(y_accel_avg):
-                        ayindex = 0
-
-                if pidaz.check_time():
-                    z_accel_offset = pidaz.get_output_value(z_accel_reading)
-
-                    mpu.set_z_accel_offset(int(z_accel_offset))
-
-                    z_accel_avg[azindex] = z_accel_reading
-                    z_accel_offset_avg[azindex] = z_accel_offset
-
-                    azindex += 1
-
-                    if azindex == len(z_accel_avg):
-                        azindex = 0
-
-                # Gyro calibration
-                if pidgx.check_time():
-                    x_gyro_offset = pidgx.get_output_value(x_gyro_reading)
-
-                    mpu.set_x_gyro_offset(int(x_gyro_offset))
-
-                    x_gyro_avg[gxindex] = x_gyro_reading
-                    x_gyro_offset_avg[gxindex] = x_gyro_offset
-
-                    gxindex += 1
-
-                    if gxindex == len(x_gyro_avg):
-                        gxindex = 0
-                        reading_count += 1
-                        
-                        if self.__debug:
-                            print('x_avg_read: ' +
-                                str(self.__array_average(x_gyro_avg)) +
-                                ' x_avg_offset: ' +
-                                str(self.__array_average(x_gyro_offset_avg)))
-                            print('y_avg_read: ' +
-                                str(self.__array_average(y_gyro_avg)) +
-                                ' y_avg_offset: ' +
-                                str(self.__array_average(y_gyro_offset_avg)))
-                            print('z_avg_read: ' +
-                                str(self.__array_average(z_gyro_avg)) +
-                                ' z_avg_offset: ' +
-                                str(self.__array_average(z_gyro_offset_avg)))
-                            print()
-
-                if pidgy.check_time():
-                    y_gyro_offset = pidgy.get_output_value(y_gyro_reading)
-
-                    mpu.set_y_gyro_offset(int(y_gyro_offset))
-
-                    y_gyro_avg[gyindex] = y_gyro_reading
-                    y_gyro_offset_avg[gyindex] = y_gyro_offset
-
-                    gyindex += 1
-
-                    if gyindex == len(y_gyro_avg):
-                        gyindex = 0
-
-                if pidgz.check_time():
-                    z_gyro_offset = pidgz.get_output_value(z_gyro_reading)
-
-                    mpu.set_z_gyro_offset(int(z_gyro_offset))
-
-                    z_gyro_avg[gzindex] = z_gyro_reading
-                    z_gyro_offset_avg[gzindex] = z_gyro_offset
-
-                    gzindex += 1
+                acceleration_x_index += 1
+                
+                if acceleration_x_index == len(x_acceleration_average):
+                    acceleration_x_index = 0
                     
-                    if gzindex == len(z_gyro_avg):
-                        gzindex = 0
+                    if self.__debug:
+                        print("x_acceleration_average_read: ", \
+                              str(self.__array_average(x_acceleration_average)), \
+                              " x_accelerometer_average_offset: ", \
+                              str(self.__array_average(x_accelerometer_offset_average)))
 
-        except KeyboardInterrupt:
-            pass
+                        print("y_acceleration_average_read: ", \
+                              str(self.__array_average(y_acceleration_average)), \
+                              " y_accelerometer_average_offset: ", \
+                              str(self.__array_average(y_accelerometer_offset_average)))
 
-        file = open(IMU_Constants.CALIBRATION_DATA_FILE, "w")
+                        print("z_acceleration_average_read: ", \
+                              str(self.__array_average(z_acceleration_average)), \
+                              " z_accelerometer_average_offset: ", \
+                              str(self.__array_average(z_accelerometer_offset_average)))
+                    
 
-        file.write(str(self.__array_average(x_accel_offset_avg)) + "\n" + 
-                    str(self.__array_average(y_accel_offset_avg)) + "\n" +
-                    str(self.__array_average(z_accel_offset_avg)) + "\n" +
-                    str(self.__array_average(x_gyro_offset_avg)) + "\n" + 
-                    str(self.__array_average(y_gyro_offset_avg)) + "\n" +
-                    str(self.__array_average(z_gyro_offset_avg)))
+            if piday.check_time():
+                y_accelerometer_offset = piday.get_output_value(y_acceleration_reading)
+
+                mpu.set_y_accel_offset(int(y_accelerometer_offset))
+
+                y_acceleration_average[acceleration_y_index] = y_acceleration_reading
+                y_accelerometer_offset_average[acceleration_y_index] = y_accelerometer_offset
+
+                acceleration_y_index += 1
+
+                if acceleration_y_index == len(y_acceleration_average):
+                    acceleration_y_index = 0
+
+
+            if pidaz.check_time():
+                z_accelerometer_offset = pidaz.get_output_value(z_acceleration_reading)
+
+                mpu.set_z_accel_offset(int(z_accelerometer_offset))
+
+                z_acceleration_average[acceleration_z_index] = z_acceleration_reading
+                z_accelerometer_offset_average[acceleration_z_index] = z_accelerometer_offset
+
+                acceleration_z_index += 1
+
+                if acceleration_z_index == len(z_acceleration_average):
+                    acceleration_z_index = 0
+
+
+            # Gyro calibration
+            if pidgx.check_time():
+                x_gyroscope_offset = pidgx.get_output_value(x_gyro_reading)
+
+                mpu.set_x_gyro_offset(int(x_gyroscope_offset))
+
+                x_gyro_average[gyro_x_index] = x_gyro_reading
+                x_gyroscope_offset_average[gyro_x_index] = x_gyroscope_offset
+
+                gyro_x_index += 1
+
+                if gyro_x_index == len(x_gyro_average):
+                    gyro_x_index = 0
+                    passthroughs += 1
+                    
+                    if self.__debug:
+                        print("x_average_read: ", \
+                              str(self.__array_average(x_gyro_average)), \
+                              " x_average_offset: ", \
+                              str(self.__array_average(x_gyroscope_offset_average)))
+
+                        print("y_average_read: ", \
+                              str(self.__array_average(y_gyro_average)), \
+                              " y_average_offset: ", \
+                              str(self.__array_average(y_gyroscope_offset_average)))
+
+                        print("z_average_read: ", \
+                              str(self.__array_average(z_gyro_average)), \
+                              " z_average_offset: ", \
+                              str(self.__array_average(z_gyroscope_offset_average)))
+
+                        print()
+    
+
+            if pidgy.check_time():
+                y_gyroscope_offset = pidgy.get_output_value(y_gyro_reading)
+
+                mpu.set_y_gyro_offset(int(y_gyroscope_offset))
+
+                y_gyro_average[gyro_y_index] = y_gyro_reading
+                y_gyroscope_offset_average[gyro_y_index] = y_gyroscope_offset
+
+                gyro_y_index += 1
+
+                if gyro_y_index == len(y_gyro_average):
+                    gyro_y_index = 0
+
+
+            if pidgz.check_time():
+                z_gyroscope_offset = pidgz.get_output_value(z_gyro_reading)
+
+                mpu.set_z_gyro_offset(int(z_gyroscope_offset))
+
+                z_gyro_average[gyro_z_index] = z_gyro_reading
+                z_gyroscope_offset_average[gyro_z_index] = z_gyroscope_offset
+
+                gyro_z_index += 1
+                
+                if gyro_z_index == len(z_gyro_average):
+                    gyro_z_index = 0
+
+
+        self.__update_offsets({
+            "x_accelerometer": self.__array_average(x_accelerometer_offset_average),
+            "y_accelerometer": self.__array_average(y_accelerometer_offset_average),
+            "z_accelerometer": self.__array_average(z_accelerometer_offset_average),
+            "x_gyroscope": self.__array_average(x_gyroscope_offset_average),
+            "y_gyroscope": self.__array_average(y_gyroscope_offset_average),
+            "z_gyroscope": self.__array_average(z_gyroscope_offset_average)
+        })
+
+
+    def __update_offsets(self, offsets):
+        file = open(IMU_Constants.CALIBRATION_DATA_FILE, 'w')
+
+        file.write(str(offsets["x_accelerometer"]) + "\n" + 
+                   str(offsets["y_accelerometer"]) + "\n" +
+                   str(offsets["z_accelerometer"]) + "\n" +
+                   str(offsets["x_gyroscope"]) + "\n" + 
+                   str(offsets["y_gyroscope"]) + "\n" +
+                   str(offsets["z_gyroscope"]))
 
         file.close()
 
 
-    def __update_offsets(self):
-        file = open(IMU_Constants.CALIBRATION_DATA_FILE, "r")
+    def __apply_offsets(self):
+        file = open(IMU_Constants.CALIBRATION_DATA_FILE, 'r')
+
         file_data = file.readlines()
+        
         file.close()
 
-        self.__x_accel_offset = int(round(float(file_data[0].strip()), 0))
-        self.__y_accel_offset = int(round(float(file_data[1].strip()), 0))
-        self.__z_accel_offset = int(round(float(file_data[2].strip()), 0))
-        self.__x_gyro_offset = int(round(float(file_data[3].strip()), 0))
-        self.__y_gyro_offset = int(round(float(file_data[4].strip()), 0))
-        self.__z_gyro_offset = int(round(float(file_data[5].strip()), 0))
+        self.__x_accelerometer_offset = int(round(float(file_data[0].strip())))
+        self.__y_accelerometer_offset = int(round(float(file_data[1].strip())))
+        self.__z_accelerometer_offset = int(round(float(file_data[2].strip())))
+        self.__x_gyroscope_offset = int(round(float(file_data[3].strip())))
+        self.__y_gyroscope_offset = int(round(float(file_data[4].strip())))
+        self.__z_gyroscope_offset = int(round(float(file_data[5].strip())))
 
 
-    def __update_imu_readings(self):
+    def __update_imu_data(self):
         mpu_int_status = self.__mpu.get_int_status()
         packet_size = self.__mpu.DMP_get_FIFO_packet_size()
         FIFO_count = self.__mpu.get_FIFO_count()
+
         FIFO_buffer = [0]*64
         FIFO_count_list = list()
 
@@ -289,19 +324,27 @@ class IMU:
             # If overflow is detected by status or fifo count we want to reset
             if (FIFO_count == 1024) or (mpu_int_status & 0x10):
                 self.__mpu.reset_FIFO()
+
             # Check if fifo data is ready
             elif (mpu_int_status & 0x02):
                 while FIFO_count < packet_size:
                     FIFO_count = self.__mpu.get_FIFO_count()
-
+                    
                 FIFO_buffer = self.__mpu.get_FIFO_bytes(packet_size)
-                accel = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
-                quat = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
-                grav = self.__mpu.DMP_get_gravity(quat)
+                acceleration = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
+                quaternion = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
+                gravity = self.__mpu.DMP_get_gravity(quaternion)
 
-                self.__roll.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quat, grav).x
-                self.__pitch.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quat, grav).y
-                self.__yaw.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quat, grav).z
+                with self.__roll.get_lock():
+                    self.__roll.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).x
+
+
+                with self.__pitch.get_lock():
+                    self.__pitch.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).y
+
+
+                with self.__yaw.get_lock():
+                    self.__yaw.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).z
 
 
     def __array_average(self, array):
@@ -314,26 +357,15 @@ class IMU:
 
 
     def get_roll_value(self):
-        return self.__roll.value
+        with self.__roll.get_lock():
+            return self.__roll.value
 
 
     def get_pitch_value(self):
-        return self.__pitch.value
+        with self.__pitch.get_lock():
+            return self.__pitch.value
 
 
     def get_yaw_value(self):
-        return self.__yaw.value
-
-
-# For testing
-if __name__ == "__main__":
-    imu = IMU(auto_calibrate = False, debug = True)
-
-    while True:
-        print(imu.get_roll_value())
-        print(imu.get_pitch_value())
-        print(imu.get_yaw_value())
-        print()
-
-        sleep(1)
-  
+        with self.__yaw.get_lock():
+            return self.__yaw.value
