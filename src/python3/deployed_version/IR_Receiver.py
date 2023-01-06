@@ -57,8 +57,18 @@ class IR_Receiver:
             reading = self.__receiver.read_one()
 
             if reading:
-                if reading.value == self.__get_key("Start") and self.__start_button_state.value != 1:
-                    self.__start_button_state.value = 1
+                start_button_state = None
+                mode = None
+
+                with self.__start_button_state.get_lock():
+                    start_button_state = self.__start_button_state.value
+
+                with self.__mode.get_lock():
+                    mode = self.__mode.value
+
+                if reading.value == self.__get_key("Start") and start_button_state != 1:
+                    with self.__start_button_state.get_lock():
+                        self.__start_button_state.value = 1
 
                     last_reading = self.__get_key("Start")
 
@@ -70,8 +80,9 @@ class IR_Receiver:
 
                     continue
 
-                elif reading.value == self.__get_key("Stop") and self.__start_button_state.value != 0:
-                    self.__start_button_state.value = 0
+                elif reading.value == self.__get_key("Stop") and start_button_state != 0:
+                    with self.__start_button_state.get_lock():
+                        self.__start_button_state.value = 0
 
                     last_reading = self.__get_key("Stop")
 
@@ -83,8 +94,10 @@ class IR_Receiver:
 
                     continue
 
-                elif reading.value == self.__get_key("Autonomous mode") and self.__mode.value == 1:
-                    self.__mode.value = 0
+                elif reading.value == self.__get_key("Autonomous mode") and mode == 1:
+                    with self.__mode.get_lock():
+                        self.__mode.value = 0
+
                     self.__clear_queue()
 
                     last_reading = self.__get_key("Autonomous mode")
@@ -97,8 +110,9 @@ class IR_Receiver:
 
                     continue
 
-                elif reading.value == self.__get_key("Manual mode") and self.__mode.value == 0:
-                    self.__mode.value = 1
+                elif reading.value == self.__get_key("Manual mode") and mode == 0:
+                    with self.__mode.get_lock():
+                        self.__mode.value = 1
 
                     last_reading = self.__get_key("Manual mode")
 
@@ -111,9 +125,10 @@ class IR_Receiver:
                     continue
 
                 # If remote is in Autonomous mode
-                if self.__mode.value == 0:
+                if mode == 0:
                     if reading.value == self.__get_key("Clear queue") and reading.value != last_reading:
                         last_reading = reading.value
+                        
                         self.__clear_queue()
 
                         if self.__sound_signals:
@@ -123,6 +138,7 @@ class IR_Receiver:
 
                     elif str(reading.value) in IR_Receiver_Constants.KEYBINDS and reading.value != last_reading:
                         last_reading = reading.value
+
                         self.__command_queue.put(reading.value)
 
                         if self.__sound_signals:
@@ -134,9 +150,15 @@ class IR_Receiver:
                         continue
 
                 # If remote is in Manual mode
-                elif self.__mode.value == 1:
-                    if str(reading.value) in IR_Receiver_Constants.KEYBINDS and reading.value != self.__last_key_press.value:
-                        self.__last_key_press.value = reading.value
+                elif mode == 1:
+                    last_key_press = None
+
+                    with self.__last_key_press.get_lock():
+                        last_key_press = self.__last_key_press.value
+
+                    if str(reading.value) in IR_Receiver_Constants.KEYBINDS and reading.value != last_key_press:
+                        with self.__last_key_press.get_lock():
+                            self.__last_key_press.value = reading.value
 
                         last_reading = reading.value
 
@@ -161,15 +183,17 @@ class IR_Receiver:
 
 
     def is_start_button_pressed(self):
-        if self.__start_button_state.value == 0:
-            return False
+        with self.__start_button_state.get_lock():
+            if self.__start_button_state.value == 0:
+                return False
 
         return True
 
 
     def get_mode(self):
-        if self.__mode.value == 0:
-            return "Autonomous mode"
+        with self.__mode.get_lock():
+            if self.__mode.value == 0:
+                return "Autonomous mode"
         
         return "Manual mode"
 
@@ -189,16 +213,18 @@ class IR_Receiver:
 
     # Should be used in Manual mode
     def get_last_key_press(self):
-        if str(self.__last_key_press.value) in IR_Receiver_Constants.KEYBINDS:
-            return IR_Receiver_Constants.KEYBINDS[str(self.__last_key_press.value)]
+        last_key_press = None
+
+        with self.__last_key_press.get_lock():
+            last_key_press = self.__last_key_press.value
+
+        if str(last_key_press) in IR_Receiver_Constants.KEYBINDS:
+            return IR_Receiver_Constants.KEYBINDS[str(last_key_press)]
 
         return None
 
 
     def reset_last_key_press(self):
-        self.__last_key_press.value = 0
-
-
-# For testing purposes
-if __name__ == "__main__":
-    receiver = IR_Receiver(sound_signals = False, debug = True)
+        with self.__last_key_press.get_lock():
+            self.__last_key_press.value = 0
+            
