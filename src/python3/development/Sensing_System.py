@@ -73,10 +73,10 @@ class Sensing_System:
 
     def get_sensor_data(self) -> dict:
         return {
-            "front": self.get_front_sensor_distance(),
-            "rear": self.get_rear_sensor_distance(),
-            "left": self.get_left_sensor_distance(),
-            "right": self.get_right_sensor_distance()
+            'f': self.get_front_sensor_distance(),
+            'b': self.get_rear_sensor_distance(),
+            'l': self.get_left_sensor_distance(),
+            'r': self.get_right_sensor_distance()
 	    }
 
 

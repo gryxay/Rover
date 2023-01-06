@@ -7,7 +7,7 @@ IMAGE_HEIGHT = 480
 MAX_FPS = 30
 
 # Percentage of confidence needed to categorise an object
-MIN_CONFIDENCE = 0.8 # 1 = 100%;
+MIN_CONFIDENCE = 0.75 # 1 = 100%;
 
 PROTOTXT_PATH = 'models/MobileNetSSD_deploy.prototxt'
 MODEL_PATH = 'models/MobileNetSSD_deploy.caffemodel'
@@ -27,11 +27,11 @@ class Computer_Vision:
         self.__camera.set(cv2.CAP_PROP_FRAME_HEIGHT, IMAGE_HEIGHT)
         self.__camera.set(cv2.CAP_PROP_FPS, MAX_FPS)
         
-        self.__net = net = cv2.dnn.readNetFromCaffe(PROTOTXT_PATH, MODEL_PATH)
+        self.__net = cv2.dnn.readNetFromCaffe(PROTOTXT_PATH, MODEL_PATH)
 
         self.__last_detected_object = Value("i", CLASSES.index("unknown"))
 
-        Process(target=self.__detect_objects).start()
+        Process(target = self.__detect_objects).start()
                 
 
     def __detect_objects(self):
@@ -51,12 +51,15 @@ class Computer_Vision:
                     if confidence > MIN_CONFIDENCE:
                         class_index = int(detected_objects[0][0][i][1])
 
-                        self.__last_detected_object.value = class_index
+                        with self.__last_detected_object.get_lock():
+                            self.__last_detected_object.value = class_index
 
 
     def get_last_detected_object(self):
-        return CLASSES[self.__last_detected_object.value]
+        with self.__last_detected_object.get_lock():
+            return CLASSES[self.__last_detected_object.value]
 
 
     def reset_last_detected_object(self):
-        self.__last_detected_object.value = CLASSES.index("unknown")
+        with self.__last_detected_object.get_lock():
+            self.__last_detected_object.value = CLASSES.index("unknown")
