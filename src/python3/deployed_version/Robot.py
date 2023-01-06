@@ -159,7 +159,7 @@ class Robot():
 
         self.__drivetrain.toggle_power(False)
         self.__computer_vision.reset_last_detected_object()
-
+        print("Found it")
         # Do something (signal the user, play a short melody, etc...)
         # Will be changed
         if self.__sound_signals:
@@ -249,25 +249,32 @@ class Robot():
             if not self.__map.check_for_obstacles(direction):
                 clear_sides.append(direction)
 
+
         return clear_sides
 
-
+    
     def __get_least_visited_sides(self, directions):
+        if direction is None:
+            return None
+
+
         side_data = {}
+        least_visited_sides = []
 
         for direction in directions:
             side_data[direction] = self.__map.check_visited_tiles(direction)
 
+
         min_times_visited = min(side_data.values())
-        least_visited_sides = []
 
         for direction, times_visited in side_data.items():
             if times_visited == min_times_visited:
                 least_visited_sides.append(direction)
 
+
         return least_visited_sides
 
 
 if __name__ == "__main__":
-    robot = Robot(imu_auto_calibrate = False, sound_signals = False, debug = True)
+    robot = Robot(imu_auto_calibrate = True, sound_signals = True, debug = True)
     
