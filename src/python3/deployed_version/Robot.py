@@ -80,7 +80,7 @@ class Robot():
                 if self.__debug:
                     print("Task \"Play a song\" is being executed")
 
-                self.__buzzer.__play_song("He's a Pirate")
+                self.__buzzer.play_song("He's a Pirate")
 
 
     def __manual_mode(self):
@@ -254,7 +254,7 @@ class Robot():
 
     
     def __get_least_visited_sides(self, directions):
-        if direction is None:
+        if directions is None:
             return None
 
 
@@ -276,5 +276,5 @@ class Robot():
 
 
 if __name__ == "__main__":
-    robot = Robot(imu_auto_calibrate = True, sound_signals = True, debug = True)
+    robot = Robot(imu_auto_calibrate = False, sound_signals = True, debug = True)
     
