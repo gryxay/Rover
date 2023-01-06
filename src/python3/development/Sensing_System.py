@@ -1,21 +1,23 @@
-from time import sleep
 from multiprocessing import Process, Value
 
 from Distance_Sensor import Distance_Sensor
 
 from Constants import Sensing_System_Constants
+from Constants import Robot_Constants
+
+#
+from time import time, sleep
 
 
 class Sensing_System:
-    __front_sensor = None
-    __rear_sensor = None
-    __left_sensor = None
-    __right_sensor = None
+    __sensors = {}
 
-    __front_sensor_last_scan = Value('f', float(Sensing_System_Constants.MIN_FRONT_DISTANCE))
-    __rear_sensor_last_scan = Value('f', float(Sensing_System_Constants.MIN_BACK_DISTANCE))
-    __left_sensor_last_scan = Value('f', float(Sensing_System_Constants.MIN_LEFT_DISTANCE))
-    __right_sensor_last_scan = Value('f', float(Sensing_System_Constants.MIN_RIGHT_DISTANCE))
+    __sensor_data = {
+        'f': Value('f', float(Sensing_System_Constants.MIN_FRONT_DISTANCE + 1)),
+        'b': Value('f', float(Sensing_System_Constants.MIN_BACK_DISTANCE + 1)),
+        'l': Value('f', float(Sensing_System_Constants.MIN_LEFT_DISTANCE + 1)),
+        'r': Value('f', float(Sensing_System_Constants.MIN_RIGHT_DISTANCE + 1))
+    }
 
     __background_process = None
 
@@ -29,83 +31,59 @@ class Sensing_System:
                        right_sensor_trig_pin = Sensing_System_Constants.RIGHT_SENSOR_TRIG_PIN, \
                        right_sensor_echo_pin = Sensing_System_Constants.RIGHT_SENSOR_ECHO_PIN):
 
-        self.__front_sensor = Distance_Sensor(front_sensor_trig_pin, front_sensor_echo_pin)
-        self.__rear_sensor = Distance_Sensor(rear_sensor_trig_pin, rear_sensor_echo_pin)
-        self.__left_sensor = Distance_Sensor(left_sensor_trig_pin, left_sensor_echo_pin)
-        self.__right_sensor = Distance_Sensor(right_sensor_trig_pin, right_sensor_echo_pin)
+        self.__sensors['f'] = Distance_Sensor(front_sensor_trig_pin, front_sensor_echo_pin)
+        self.__sensors['b'] = Distance_Sensor(rear_sensor_trig_pin, rear_sensor_echo_pin)
+        self.__sensors['l'] = Distance_Sensor(left_sensor_trig_pin, left_sensor_echo_pin)
+        self.__sensors['r'] = Distance_Sensor(right_sensor_trig_pin, right_sensor_echo_pin)
 
         # Start a process, that constantly updates distance sensor in the background
         self.__background_process = Process(target = self.__update_sensor_data)
         self.__background_process.start()
 
-    
+
     def __update_sensor_data(self):
         while True:
-            distance = self.__front_sensor.get_distance()
+            for direction in Robot_Constants.DIRECTIONS:
+                distance = self.__sensors[direction].get_distance()
 
-            if distance is not None:
-                with self.__front_sensor_last_scan.get_lock():
-                    self.__front_sensor_last_scan.value = distance
-                    print("1", distance)
-
-
-            distance = self.__rear_sensor.get_distance()
-
-            if distance is not None:
-                with self.__rear_sensor_last_scan.get_lock():
-                    self.__rear_sensor_last_scan.value = distance
-                    print("2", distance)
-
-
-            distance = self.__left_sensor.get_distance()
-
-            if distance is not None:
-                with self.__left_sensor_last_scan.get_lock():
-                    self.__left_sensor_last_scan.value = distance
-                    print("3", distance)
-
-
-            distance = self.__right_sensor.get_distance()
-
-            if distance is not None:
-                with self.__right_sensor_last_scan.get_lock():
-                    self.__right_sensor_last_scan.value = distance
-                    print("4", distance)
+                if distance is not None:
+                    with self.__sensor_data[direction].get_lock():
+                        self.__sensor_data[direction].value = distance
 
 
     def get_front_sensor_distance(self) -> float:
-        with self.__front_sensor_last_scan.get_lock():
-            return round(self.__front_sensor_last_scan.value, 1)
+        with self.__sensor_data['f'].get_lock():
+            return self.__sensor_data['f'].value
 
 
     def get_rear_sensor_distance(self) -> float:
-        with self.__rear_sensor_last_scan.get_lock():
-            return round(self.__rear_sensor_last_scan.value, 1)
+        with self.__sensor_data['b'].get_lock():
+            return self.__sensor_data['b'].value
 
 
     def get_left_sensor_distance(self) -> float:
-        with self.__left_sensor_last_scan.get_lock():
-            return round(self.__left_sensor_last_scan.value, 1)
+        with self.__sensor_data['l'].get_lock():
+            return self.__sensor_data['l'].value
 
 
     def get_right_sensor_distance(self) -> float:
-        with self.__right_sensor_last_scan.get_lock():
-            return round(self.__right_sensor_last_scan.value, 1)
+        with self.__sensor_data['r'].get_lock():
+            return self.__sensor_data['r'].value
 
 
     def get_sensor_data(self) -> dict:
         return {
-            "front": round(self.__front_sensor_last_scan.value, 1),
-            "rear": round(self.__rear_sensor_last_scan.value, 1),
-            "left": round(self.__left_sensor_last_scan.value, 1),
-            "right": round(self.__right_sensor_last_scan.value, 1)
+            "front": self.get_front_sensor_distance(),
+            "rear": self.get_rear_sensor_distance(),
+            "left": self.get_left_sensor_distance(),
+            "right": self.get_right_sensor_distance()
 	    }
 
 
     def is_front_clear(self) -> bool:
-        if self.__front_sensor_last_scan.value > Sensing_System_Constants.MIN_FRONT_DISTANCE and \
-           self.__left_sensor_last_scan.value > Sensing_System_Constants.MIN_LEFT_DISTANCE and \
-           self.__right_sensor_last_scan.value > Sensing_System_Constants.MIN_RIGHT_DISTANCE:
+        if self.get_front_sensor_distance() > Sensing_System_Constants.MIN_FRONT_DISTANCE and \
+           self.get_left_sensor_distance() > Sensing_System_Constants.MIN_LEFT_DISTANCE and \
+           self.get_right_sensor_distance() > Sensing_System_Constants.MIN_RIGHT_DISTANCE:
 
             return True 
         
@@ -113,19 +91,7 @@ class Sensing_System:
 
 
     def is_back_clear(self) -> bool:
-        if self.__rear_sensor_last_scan.value > Sensing_System_Constants.MIN_BACK_DISTANCE:
+        if self.get_rear_sensor_distance() > Sensing_System_Constants.MIN_BACK_DISTANCE:
             return True
         
         return False
-
-
-# For testing purposes
-if __name__ == "__main__":
-    sensing_system = Sensing_System()
-
-    while True:
-        #print(sensing_system.get_sensor_data())
-        print(sensing_system.get_front_sensor_distance(), \
-              sensing_system.get_rear_sensor_distance(), \
-              sensing_system.get_left_sensor_distance(), \
-              sensing_system.get_right_sensor_distance())

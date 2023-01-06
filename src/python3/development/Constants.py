@@ -191,7 +191,7 @@ class Distance_Sensor_Constants:
     # Values in seconds
     DELAY = 0.01			
     SIGNAL_LENGTH = 0.00001
-    MAX_TIME_BETWEEN_PULSES = MAX_READING_DISTANCE / HALF_SPEED_OF_SOUND
+    TIMEOUT = MAX_READING_DISTANCE / HALF_SPEED_OF_SOUND
 
 
 class Drivetrain_Constants:
@@ -229,6 +229,7 @@ class IMU_Constants:
     I2C_BUS = 1
     DEVICE_ADDRESS = 0x68
 
+    CALIBRATION_PASSTHROUGHS = 3
     CALIBRATION_DATA_FILE = "calibration_values.txt"
 
 
