@@ -23,7 +23,8 @@ sensing_system = Sensing_system()
 class explore_logic:
     def __init__(self, map_object):
         self.map = map_object
-        self.orientation = 'N'
+        self.orientations = ['N', 'E', 'S', 'W']
+        self.orientation = self.orientations[0]
     
 
     def turn_left(self):
@@ -32,30 +33,18 @@ class explore_logic:
         if self.orientation == 'N':
             self.orientation = 'W'
 
-        elif self.orientation == 'W':
-            self.orientation = 'S'
-
-        elif self.orientation == 'S':
-            self.orientation = 'E'
-
-        elif self.orientation == 'E':
-            self.orientation = 'N'
+        else:
+            self.orientation = self.orientations[self.orientations.index(self.orientation) - 1]
     
 
     def turn_right(self):
         drivetrain.turn('r', 90)
 
-        if self.orientation == 'N':
-            self.orientation = 'E'
-
-        elif self.orientation == 'E':
-            self.orientation = 'S'
-
-        elif self.orientation == 'S':
-            self.orientation = 'W'
-
-        elif self.orientation == 'W':
+        if self.orientation == 'W':
             self.orientation = 'N'
+
+        else:
+            self.orientation = self.orientations[self.orientations.index(self.orientation) + 1]
     
 
     def move_forward(self):
@@ -68,13 +57,9 @@ class explore_logic:
     
 
     def can_move_forward(self):
-        if sensing_system.get_front_sensor_distance() < EMERGENCY_STOP_DISTANCE:
-            return False
-
-        elif sensing_system.get_left_sensor_distance() < EMERGENCY_STOP_DISTANCE:
-            return False
-
-        elif sensing_system.get_right_sensor_distance() < EMERGENCY_STOP_DISTANCE:
+        if sensing_system.get_front_sensor_distance() < EMERGENCY_STOP_DISTANCE or \
+        sensing_system.get_right_sensor_distance() < EMERGENCY_STOP_DISTANCE or \
+        sensing_system.get_left_sensor_distance() < EMERGENCY_STOP_DISTANCE:
             return False
 
         return True
@@ -84,25 +69,23 @@ class explore_logic:
         self.update_map()
         self.map.display_map()
 
-        if self.is_wall_on_left() == False:
-            self.turn_left()
-            self.update_map()
-            self.move_forward()
-            self.update_position()
+        movements = [('turn_left', self.is_wall_on_left() == False),
+                   ('move_forward', self.is_facing_wall() == False),
+                   ('turn_right', self.is_wall_on_right() == False),
+                   ('turn_right', True),
+                   ('turn_right', True)]
 
-        elif self.is_facing_wall() == False:
-            self.move_forward()
-            self.update_position()
-
-        elif self.is_wall_on_right() == False:
-            self.turn_right()
-            self.update_map()
-            self.move_forward()
-            self.update_position()
-
-        else:
-            self.turn_right()
-            self.turn_right()
+        # executes first match
+        for movement, condition in movements:
+            if condition:
+                if movement == 'turn_left':
+                    self.turn_left()
+                elif movement == 'move_forward':
+                    self.move_forward()
+                elif movement == 'turn_right':
+                    self.turn_right()
+                self.update_position()
+                break
 
 
     def find_wall(self):
@@ -123,7 +106,7 @@ class explore_logic:
         self.update_map()
         self.map.display_map()
 
-        # check if front is free
+        # check if front has no obstacles
         if self.is_facing_wall() == False:
             pass
 
@@ -134,8 +117,8 @@ class explore_logic:
             self.turn_right()
 
         else:
-            self.turn_left()
-            self.turn_left()
+            for _ in range(2):
+                self.turn_left()
 
         if self.is_facing_wall() == False:
             self.move_forward()
@@ -143,59 +126,32 @@ class explore_logic:
     
 
     def update_position(self):
-        if self.orientation == 'N':
-            self.map.cur_y += 1
-
-        elif self.orientation == 'E':
-            self.map.cur_x += 1
-
-        elif self.orientation == 'S':
-            self.map.cur_y -= 1
-
-        elif self.orientation == 'W':
-            self.map.cur_x -= 1
+        movements = {'N': (0, 1), 'E': (1, 0), 'S': (0, -1), 'W': (-1, 0)}
+        self.map.cur_x += movements[self.orientation][0]
+        self.map.cur_y += movements[self.orientation][1]
     
 
     def is_facing_wall(self):
-        if self.orientation == 'N':
-            return map.get_tile(self.map.cur_x, self.map.cur_y + 1).is_obstacle or map.get_tile(self.map.cur_x + 1, self.map.cur_y + 1).is_obstacle or map.get_tile(self.map.cur_x - 1, self.map.cur_y + 1).is_obstacle
-        
-        elif self.orientation == 'E':
-            return map.get_tile(self.map.cur_x + 1, self.map.cur_y).is_obstacle or map.get_tile(self.map.cur_x + 1, self.map.cur_y + 1).is_obstacle or map.get_tile(self.map.cur_x + 1, self.map.cur_y - 1).is_obstacle
-        
-        elif self.orientation == 'S':
-            return map.get_tile(self.map.cur_x, self.map.cur_y - 1).is_obstacle or map.get_tile(self.map.cur_x + 1, self.map.cur_y - 1).is_obstacle or map.get_tile(self.map.cur_x - 1, self.map.cur_y - 1).is_obstacle
-        
-        elif self.orientation == 'W':
-            return map.get_tile(self.map.cur_x - 1, self.map.cur_y).is_obstacle or map.get_tile(self.map.cur_x - 1, self.map.cur_y + 1).is_obstacle or map.get_tile(self.map.cur_x - 1, self.map.cur_y - 1).is_obstacle
-    
+        movements = {'N': [(0, 1), (1, 1), (-1, 1)],
+                 'E': [(1, 0), (1, 1), (1, -1)],
+                 'S': [(0, -1), (1, -1), (-1, -1)],
+                 'W': [(-1, 0), (-1, 1), (-1, -1)]}
+                 
+        for x, y in movements[self.orientation]:
+            if map.get_tile(self.map.cur_x + x, self.map.cur_y + y).is_obstacle:
+                return True
+        return False
 
     def is_wall_on_left(self):
-        if self.orientation == 'N':
-            return map.get_tile(self.map.cur_x - 1, self.map.cur_y).is_obstacle
-
-        elif self.orientation == 'E':
-            return map.get_tile(self.map.cur_x, self.map.cur_y + 1).is_obstacle
-
-        elif self.orientation == 'S':
-            return map.get_tile(self.map.cur_x + 1, self.map.cur_y).is_obstacle
-
-        elif self.orientation == 'W':
-            return map.get_tile(self.map.cur_x, self.map.cur_y - 1).is_obstacle
+        movements = {'N': (-1, 0), 'E': (0, 1), 'S': (1, 0), 'W': (0, -1)}
+        x, y = movements[self.orientation]
+        return map.get_tile(self.map.cur_x + x, self.map.cur_y + y).is_obstacle
 
 
     def is_wall_on_right(self):
-        if self.orientation == 'N':
-            return map.get_tile(self.map.cur_x + 1, self.map.cur_y).is_obstacle
-
-        elif self.orientation == 'E':
-            return map.get_tile(self.map.cur_x, self.map.cur_y - 1).is_obstacle
-
-        elif self.orientation == 'S':
-            return map.get_tile(self.map.cur_x - 1, self.map.cur_y).is_obstacle
-
-        elif self.orientation == 'W':
-            return map.get_tile(self.map.cur_x, self.map.cur_y + 1).is_obstacle
+        movements = {'N': (1, 0), 'E': (0, -1), 'S': (-1, 0), 'W': (0, 1)}
+        x, y = movements[self.orientation]
+        return map.get_tile(self.map.cur_x + x, self.map.cur_y + y).is_obstacle
 
 
     def get_tile_count(self, distance):
@@ -210,148 +166,40 @@ class explore_logic:
 
     def update_map(self):
         if self.orientation == 'N':
-            # adding forward tiles
-            distance = sensing_system.get_front_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x, self.map.cur_y + i + 1, unknown = False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x, self.map.cur_y +
-                              tile_count, unknown=False, obstacle=True)
-
-            # adding left tiles
-            distance = sensing_system.get_left_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x - 1,
-                                  self.map.cur_y + i + 1, unknown=False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x - 1, self.map.cur_y + tile_count,
-                              unknown=False, obstacle=True)
-
-            # adding right tiles
-            distance = sensing_system.get_right_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x + 1,
-                                  self.map.cur_y + i + 1, unknown=False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x + 1, self.map.cur_y + tile_count,
-                              unknown=False, obstacle=True)
-
+            directions = [('N', sensing_system.get_front_sensor_distance()),
+                        ('W', sensing_system.get_left_sensor_distance()),
+                        ('E', sensing_system.get_right_sensor_distance())]
         elif self.orientation == 'E':
-            # adding forward tiles
-            distance = sensing_system.get_front_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x + i + 1, self.map.cur_y, unknown = False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x + tile_count, self.map.cur_y,
-                              unknown=False, obstacle=True)
-
-            # adding left tiles
-            distance = sensing_system.get_left_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x + i + 1,
-                                  self.map.cur_y + 1, unknown=False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x + tile_count, self.map.cur_y + 1,
-                              unknown=False, obstacle=True)
-
-            # adding right tiles
-            distance = sensing_system.get_right_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x + i + 1,
-                                  self.map.cur_y - 1, unknown=False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x + tile_count, self.map.cur_y - 1,
-                              unknown=False, obstacle=True)
-
+            directions = [('E', sensing_system.get_front_sensor_distance()),
+                        ('S', sensing_system.get_left_sensor_distance()),
+                        ('N', sensing_system.get_right_sensor_distance())]
         elif self.orientation == 'S':
-            # adding forward tiles
-            distance = sensing_system.get_front_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x, self.map.cur_y - i - 1, unknown = False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x, self.map.cur_y -
-                              tile_count, unknown=False, obstacle=True)
-
-            # adding left tiles
-            distance = sensing_system.get_left_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x + 1,
-                                  self.map.cur_y - i - 1, unknown=False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x + 1, self.map.cur_y - tile_count,
-                              unknown=False, obstacle=True)
-
-            # adding right tiles
-            distance = sensing_system.get_right_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x - 1,
-                                  self.map.cur_y - i - 1, unknown=False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x - 1, self.map.cur_y - tile_count,
-                              unknown=False, obstacle=True)
-
+            directions = [('S', sensing_system.get_front_sensor_distance()),
+                        ('E', sensing_system.get_left_sensor_distance()),
+                        ('W', sensing_system.get_right_sensor_distance())]
         elif self.orientation == 'W':
-            # adding forward tiles
-            distance = sensing_system.get_front_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
+            directions = [('S', sensing_system.get_front_sensor_distance()),
+                        ('N', sensing_system.get_left_sensor_distance()),
+                        ('S', sensing_system.get_right_sensor_distance())]
+
+        tile_counts = self.get_tile_count(directions)
+
+        for direction, (tile_count, has_obstacle) in zip(directions, tile_counts):
+            if direction == 'N':
+                offset_x, offset_y = 0, 1
+            elif direction == 'E':
+                offset_x, offset_y = 1, 0
+            elif direction == 'S':
+                offset_x, offset_y = 0, -1
+            elif direction == 'W':
+                offset_x, offset_y = -1, 0
 
             for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x - i - 1, self.map.cur_y, unknown = False)
+                self.map.add_tile(self.map.cur_x + offset_x, self.map.cur_y + offset_y, unknown=False)
+                offset_x += 1
 
             if has_obstacle:
-                self.map.add_tile(self.map.cur_x - tile_count, self.map.cur_y,
-                              unknown=False, obstacle=True)
-
-            # adding left tiles
-            distance = sensing_system.get_left_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x - i - 1,
-                                  self.map.cur_y - 1, unknown=False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x - tile_count, self.map.cur_y - 1,
-                              unknown=False, obstacle=True)
-
-            # adding right tiles
-            distance = sensing_system.get_right_sensor_distance()
-            tile_count, has_obstacle = self.get_tile_count(distance)
-
-            for i in range(tile_count):
-                self.map.add_tile(self.map.cur_x - i - 1,
-                                  self.map.cur_y + 1, unknown=False)
-
-            if has_obstacle:
-                self.map.add_tile(self.map.cur_x - tile_count, self.map.cur_y + 1,
-                              unknown=False, obstacle=True)
+                self.map.add_tile(self.map.cur_x + offset_x, self.map.cur_y + offset_y, unknown=False, obstacle=True)
 
             
 def explore_v3(map):
@@ -379,4 +227,3 @@ if __name__ == "__main__":
     beeper.beep(3, 0.1)
 
     Process(target=explore_v3, args=(map,)).start()
-	
