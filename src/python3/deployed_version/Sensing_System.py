@@ -73,10 +73,10 @@ class Sensing_System:
 
     def get_sensor_data(self) -> dict:
         return {
-            "front": self.get_front_sensor_distance(),
-            "rear": self.get_rear_sensor_distance(),
-            "left": self.get_left_sensor_distance(),
-            "right": self.get_right_sensor_distance()
+            'f': self.get_front_sensor_distance(),
+            'b': self.get_rear_sensor_distance(),
+            'l': self.get_left_sensor_distance(),
+            'r': self.get_right_sensor_distance()
 	    }
 
 
@@ -95,3 +95,22 @@ class Sensing_System:
             return True
         
         return False
+
+
+# For testing purposes
+if __name__ == "__main__":
+    sensing_system = Sensing_System()
+
+    starting_time = time()
+    count = 0
+
+    try:
+        while True:
+            count += 1
+            print(sensing_system.get_sensor_data())
+            print("Execution length: ", time() - starting_time)
+            #sleep(0.001)
+
+    except:
+        print("Execution length: ", time() - starting_time)
+        print("Count: ", count)
