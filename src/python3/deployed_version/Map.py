@@ -550,7 +550,7 @@ class Map:
     def update_map(self, sensor_data):
         if self.__orientation == 'N':
             # adding forward tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["front"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['f'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position(), self.get_current_y_position() + i + 4):
@@ -560,7 +560,7 @@ class Map:
                 self.add_tile(self.get_current_x_position(), self.get_current_y_position() + tile_count + 4, is_known = True, is_obstacle = True)
 
             # adding left tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["left"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['l'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() - 1, self.get_current_y_position() + i + 4):
@@ -570,7 +570,7 @@ class Map:
                 self.add_tile(self.get_current_x_position() - 1, self.get_current_y_position() + tile_count + 4, is_known = True, is_obstacle = True)
 
             # adding right tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["right"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['r'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() + 1, self.get_current_y_position() + i + 4):
@@ -581,7 +581,7 @@ class Map:
 
         elif self.__orientation == 'E':
             # adding forward tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["front"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['f'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() + i + 4, self.get_current_y_position()):
@@ -591,7 +591,7 @@ class Map:
                 self.add_tile(self.get_current_x_position() + tile_count + 4, self.get_current_y_position(), is_known = True, is_obstacle = True)
 
             # adding left tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["left"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['l'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() + i + 4, self.get_current_y_position() + 1):
@@ -601,7 +601,7 @@ class Map:
                 self.add_tile(self.get_current_x_position() + tile_count + 4, self.get_current_y_position() + 1, is_known = True, is_obstacle = True)
 
             # adding right tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["right"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['r'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() + i + 4, self.get_current_y_position() - 1):
@@ -612,7 +612,7 @@ class Map:
 
         elif self.__orientation == 'S':
             # adding forward tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["front"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['f'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position(), self.get_current_y_position() - i - 4):
@@ -622,7 +622,7 @@ class Map:
                 self.add_tile(self.get_current_x_position(), self.get_current_y_position() - tile_count - 4, is_known = True, is_obstacle = True)
 
             # adding left tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["left"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['l'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() + 1, self.get_current_y_position() - i - 4):
@@ -632,7 +632,7 @@ class Map:
                 self.add_tile(self.get_current_x_position() + 1, self.get_current_y_position() - tile_count - 4, is_known = True, is_obstacle = True)
 
             # adding right tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["right"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['r'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() - 1, self.get_current_y_position() - i - 4):
@@ -643,7 +643,7 @@ class Map:
 
         elif self.__orientation == 'W':
             # adding forward tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["front"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['f'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() - i - 4, self.get_current_y_position()):
@@ -653,7 +653,7 @@ class Map:
                 self.add_tile(self.get_current_x_position() - tile_count - 4, self.get_current_y_position(), is_known = True, is_obstacle = True)
 
             # adding left tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["left"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['l'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() - i - 4, self.get_current_y_position() - 1):
@@ -663,7 +663,7 @@ class Map:
                 self.add_tile(self.get_current_x_position() - tile_count - 3, self.get_current_y_position() - 1, is_known = True, is_obstacle = True)
 
             # adding right tiles
-            tile_count, has_obstacle = self.__get_tile_count(sensor_data["right"])
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['r'])
 
             for i in range(tile_count):
                 if not self.__get_tile(self.get_current_x_position() - i - 4, self.get_current_y_position() + 1):
