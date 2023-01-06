@@ -95,22 +95,3 @@ class Sensing_System:
             return True
         
         return False
-
-
-# For testing purposes
-if __name__ == "__main__":
-    sensing_system = Sensing_System()
-
-    starting_time = time()
-    count = 0
-
-    try:
-        while True:
-            count += 1
-            print(sensing_system.get_sensor_data())
-            print("Execution length: ", time() - starting_time)
-            #sleep(0.001)
-
-    except:
-        print("Execution length: ", time() - starting_time)
-        print("Count: ", count)
