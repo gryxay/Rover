@@ -125,6 +125,20 @@ class Buzzer_Constants:
     }
 
     SONGS = {
+        "Found it!": [
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        (None, 0.25),
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        (None, 0.25),
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        ('C4', 0.0625), ('D4', 0.0625), ('E4', 0.0625), (None, 0.0625),
+        (None, 0.25)
+        ],
         "He's a Pirate": [
         ('E4', 0.125), ('G4', 0.125), ('A4', 0.25), ('A4', 0.125), 
         (None, 0.125), ('A4', 0.125), ('B4', 0.125), ('C5', 0.25), 
@@ -178,6 +192,25 @@ class Buzzer_Constants:
         (None, 0.375), ('B4', 0.125), ('C5', 0.125), (None, 0.125), 
         ('B4', 0.125), (None, 0.125), ('A4', 0.5)
     ]}
+
+
+class Computer_Vision_Constants:
+    IMAGE_WIDTH = 640
+    IMAGE_HEIGHT = 480
+    MAX_FPS = 30
+
+    # Percentage of confidence needed to categorise an object
+    MIN_CONFIDENCE = 0.75 # 1 = 100%;
+
+    PROTOTXT_PATH = 'models/MobileNetSSD_deploy.prototxt'
+    MODEL_PATH = 'models/MobileNetSSD_deploy.caffemodel'
+
+    CLASSES = [
+        "background", "aeroplane", "bicycle", "bird", "boat",
+        "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
+        "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
+        "sofa", "train", "tvmonitor", "unknown"
+    ]
 
 
 class Distance_Sensor_Constants:
@@ -246,10 +279,10 @@ class IR_Receiver_Constants:
         "61192": "Play a song",
         "61193": "Unsigned",
         "61194": "Unsigned",
-        "61195": "Unsigned",
-        "61196": "Unsigned",
+        "61195": "Clear the map",
+        "61196": "Left micro turn",
         "61197": "Forward",
-        "61198": "Unsigned",
+        "61198": "Right micro turn",
         "61199": "Unsigned",
         "61200": "Left",
         "61201": "Stop",

@@ -1,35 +1,19 @@
 from multiprocessing import Process, Value
 import cv2
 
-
-IMAGE_WIDTH = 640
-IMAGE_HEIGHT = 480
-MAX_FPS = 30
-
-# Percentage of confidence needed to categorise an object
-MIN_CONFIDENCE = 0.75 # 1 = 100%;
-
-PROTOTXT_PATH = 'models/MobileNetSSD_deploy.prototxt'
-MODEL_PATH = 'models/MobileNetSSD_deploy.caffemodel'
-
-CLASSES = [
-    "background", "aeroplane", "bicycle", "bird", "boat",
-    "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-    "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
-    "sofa", "train", "tvmonitor", "unknown"
-]
+from Constants import Computer_Vision_Constants
 
 
 class Computer_Vision:
     def __init__(self):
         self.__camera = cv2.VideoCapture(0)
-        self.__camera.set(cv2.CAP_PROP_FRAME_WIDTH, IMAGE_WIDTH)
-        self.__camera.set(cv2.CAP_PROP_FRAME_HEIGHT, IMAGE_HEIGHT)
-        self.__camera.set(cv2.CAP_PROP_FPS, MAX_FPS)
+        self.__camera.set(cv2.CAP_PROP_FRAME_WIDTH, Computer_Vision_Constants.IMAGE_WIDTH)
+        self.__camera.set(cv2.CAP_PROP_FRAME_HEIGHT, Computer_Vision_Constants.IMAGE_HEIGHT)
+        self.__camera.set(cv2.CAP_PROP_FPS, Computer_Vision_Constants.MAX_FPS)
         
-        self.__net = cv2.dnn.readNetFromCaffe(PROTOTXT_PATH, MODEL_PATH)
+        self.__net = cv2.dnn.readNetFromCaffe(Computer_Vision_Constants.PROTOTXT_PATH, Computer_Vision_Constants.MODEL_PATH)
 
-        self.__last_detected_object = Value("i", CLASSES.index("unknown"))
+        self.__last_detected_object = Value("i", Computer_Vision_Constants.CLASSES.index("unknown"))
 
         Process(target = self.__detect_objects).start()
                 
@@ -48,7 +32,7 @@ class Computer_Vision:
                 for i in range(detected_objects.shape[2]):
                     confidence = detected_objects[0][0][i][2]
 
-                    if confidence > MIN_CONFIDENCE:
+                    if confidence > Computer_Vision_Constants.MIN_CONFIDENCE:
                         class_index = int(detected_objects[0][0][i][1])
 
                         with self.__last_detected_object.get_lock():
@@ -57,9 +41,9 @@ class Computer_Vision:
 
     def get_last_detected_object(self):
         with self.__last_detected_object.get_lock():
-            return CLASSES[self.__last_detected_object.value]
+            return Computer_Vision_Constants.CLASSES[self.__last_detected_object.value]
 
 
     def reset_last_detected_object(self):
         with self.__last_detected_object.get_lock():
-            self.__last_detected_object.value = CLASSES.index("unknown")
+            self.__last_detected_object.value = Computer_Vision_Constants.CLASSES.index("unknown")

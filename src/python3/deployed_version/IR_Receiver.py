@@ -124,6 +124,21 @@ class IR_Receiver:
 
                     continue
 
+                elif reading.value == self.__get_key("Clear the map") and reading.value != last_reading:
+                    last_reading = reading.value
+
+                    with self.__last_key_press.get_lock():
+                        self.__last_key_press.value = reading.value
+
+                    if self.__sound_signals:
+                        self.__buzzer.beep(1, 0.3)
+
+                    if self.__debug:
+                        print("Receiver: Clear the map key was pressed")
+
+                    continue
+
+
                 # If remote is in Autonomous mode
                 if mode == 0:
                     if reading.value == self.__get_key("Clear queue") and reading.value != last_reading:
@@ -227,4 +242,9 @@ class IR_Receiver:
     def reset_last_key_press(self):
         with self.__last_key_press.get_lock():
             self.__last_key_press.value = 0
-            
+
+
+# For testing purposes
+if __name__ == "__main__":
+    buzzer = Buzzer()
+    receiver = IR_Receiver(buzzer = buzzer, sound_signals = True, debug = True)
