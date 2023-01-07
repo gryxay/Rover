@@ -34,6 +34,12 @@ class Map:
     __starting_tile_position = [0, 0]
     __current_tile_position = [0, 0]
 
+    # Stores tracked tile position and orientation where was the last searched object seen
+    __last_object_position = {
+        "x": None,
+        "y": None,
+        "orientation": None
+    }
 
     def __init__(self):
         self.__setup_starting_position()
@@ -855,6 +861,17 @@ class Map:
         return path[::-1]
 
 
+
+    def set_last_object_location(self):
+        self.__last_object_position["x"] = self.__current_tile_position[0]
+        self.__last_object_position["y"] = self.__current_tile_position[1]
+        self.__last_object_position["orientation"] = self.__orientation
+
+
+    def get_last_object_location(self):
+        return self.__last_object_position
+
+
     def print_tile_info(self, tile):
         print("Position: ", tile.get_position())
         print("times_visited: ", tile.get_times_visited())
@@ -878,6 +895,9 @@ class Map:
 
         elif x == self.get_current_x_position() and y == self.get_current_y_position():
             print("X", end="")
+
+        elif x == self.__last_object_position["x"] and y == self.__last_object_position["y"]:
+            print("O", end="")
 
         elif key in self.__map:
             tile = self.__map[key]
@@ -911,3 +931,13 @@ class Map:
                 self.display_tile(x, y)
 
             print()
+
+
+    def reset(self):
+        self.__map = {}
+        self.__bounds = [0, 0, 0, 0]
+        self.__orientation = 'N'
+        self. __starting_tile_position = [0, 0]
+        self.__current_tile_position = [0, 0]
+
+        self.__setup_starting_position()

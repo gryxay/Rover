@@ -15,7 +15,7 @@ from Constants import Map_Constants
 # In development
 class Robot():
     __drivetrain = None
-    #__computer_vision = Computer_Vision()
+    __computer_vision = Computer_Vision()
     __sensing_system = Sensing_System()
     __remote_receiver = None
     __buzzer = Buzzer()
@@ -52,6 +52,14 @@ class Robot():
 
                 elif self.__remote_receiver.get_mode() == "Manual mode":
                     self.__manual_mode()
+
+            elif self.__remote_receiver.get_last_key_press() == "Clear the map":
+                self.__map.reset()
+
+                self.__remote_receiver.reset_last_key_press()
+
+                if self.__debug:
+                    print("The map was cleared")
     
     
     def __autonomous_mode(self):
@@ -107,6 +115,14 @@ class Robot():
                 self.__turn('r')
                 self.__remote_receiver.reset_last_key_press()
 
+            elif self.__remote_receiver.get_last_key_press() == "Left micro turn":
+                self.__drivetrain.turn('l', 1)
+                self.__remote_receiver.reset_last_key_press()
+
+            elif self.__remote_receiver.get_last_key_press() == "Right micro turn":
+                self.__drivetrain.turn('r', 1)
+                self.__remote_receiver.reset_last_key_press()
+
 
         self.__map.display_map()
         self.__drivetrain.toggle_power(False)
@@ -137,7 +153,6 @@ class Robot():
             self.__map.display_map()
 
 
-    # Not finished
     def __find_object(self, object):
         self.__drivetrain.toggle_power(True)
 
@@ -159,11 +174,10 @@ class Robot():
 
         self.__drivetrain.toggle_power(False)
         self.__computer_vision.reset_last_detected_object()
-        print("Found it")
-        # Do something (signal the user, play a short melody, etc...)
-        # Will be changed
+        self.__map.set_last_object_location()
+
         if self.__sound_signals:
-            self.__buzzer.play_song("He's a Pirate")
+            self.__buzzer.play_song("Found it!")
 
         if self.__debug:
             self.__map.display_map()
@@ -264,7 +278,9 @@ class Robot():
         for direction in directions:
             side_data[direction] = self.__map.check_visited_tiles(direction)
 
-
+        if side_data is None:
+            return None
+            
         min_times_visited = min(side_data.values())
 
         for direction, times_visited in side_data.items():
