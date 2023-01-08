@@ -247,9 +247,10 @@ class Drivetrain_Constants:
     # Time between signal pulses when turning
     TURNING_DELAY = 0.00075
 
+    MICRO_TURN_STEPS = 10
+
     # strict_turn() constants
     STRICT_TURN_TURNING_ANGLE = 90
-    STRICT_TURN_TURNING_OFFSET = 3
 
     LEFT_STRICT_TURN_FORWARD_OFFSET = 2
     LEFT_STRICT_TURN_BACKWARD_OFFSET = 2.5
@@ -298,7 +299,7 @@ class IR_Receiver_Constants:
 class Map_Constants:
     TILE_SIZE = 6
 
-    VISION_RANGE = 3
+    VISION_RANGE = 4
     OBSTACLE_CHECKING_RANGE = 7
     VISITED_TILES_CHECKING_RANGE = 5
 

@@ -114,6 +114,28 @@ class Drivetrain:
 		sleep(delay)
 
 
+	def micro_turn(self, direction):
+		if direction == 'l':
+			GPIO.output(self.__dir_pin_1, GPIO.LOW)
+			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
+
+		elif direction == 'r':
+			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
+			GPIO.output(self.__dir_pin_2, GPIO.LOW)
+
+		
+		for i in range(Drivetrain_Constants.MICRO_TURN_STEPS):
+			GPIO.output(self.__step_pin_1, GPIO.HIGH)
+			GPIO.output(self.__step_pin_2, GPIO.HIGH)
+
+			sleep(Drivetrain_Constants.TURNING_DELAY)
+			
+			GPIO.output(self.__step_pin_1, GPIO.LOW)
+			GPIO.output(self.__step_pin_2, GPIO.LOW)
+			
+			sleep(Drivetrain_Constants.TURNING_DELAY)
+
+
 	# Works for turns up to 360 degrees
 	def turn(self, direction, degrees):
 		turning_offset = (degrees % 360.0) / 30
@@ -148,43 +170,13 @@ class Drivetrain:
 
 
 	def strict_turn(self, direction):
-		turning_offset = Drivetrain_Constants.STRICT_TURN_TURNING_OFFSET
-
 		if direction == 'l':
 			self.__drive('f', Drivetrain_Constants.LEFT_STRICT_TURN_FORWARD_OFFSET, "slow")
 
 		elif direction == 'r':
 			self.__drive('f', Drivetrain_Constants.RIGHT_STRICT_TURN_FORWARD_OFFSET, "slow")
 
-
-		if direction == 'l':
-			GPIO.output(self.__dir_pin_1, GPIO.LOW)
-			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
-
-			final_orientation = self.__imu.get_yaw_value() - Drivetrain_Constants.STRICT_TURN_TURNING_ANGLE
-			turning_offset *= -1
-
-			if final_orientation < 0:
-				final_orientation = 360.0 + final_orientation
-
-		elif direction == 'r':
-			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
-			GPIO.output(self.__dir_pin_2, GPIO.LOW)
-
-			final_orientation = (self.__imu.get_yaw_value() + Drivetrain_Constants.STRICT_TURN_TURNING_ANGLE) % 360.0
-
-
-		while round(self.__imu.get_yaw_value()) != round(final_orientation - turning_offset):
-			GPIO.output(self.__step_pin_1, GPIO.HIGH)
-			GPIO.output(self.__step_pin_2, GPIO.HIGH)
-
-			sleep(Drivetrain_Constants.TURNING_DELAY)
-			
-			GPIO.output(self.__step_pin_1, GPIO.LOW)
-			GPIO.output(self.__step_pin_2, GPIO.LOW)
-			
-			sleep(Drivetrain_Constants.TURNING_DELAY)
-
+		self.turn(direction, Drivetrain_Constants.STRICT_TURN_TURNING_ANGLE)
 
 		if direction == 'l':
 			self.__drive('b', Drivetrain_Constants.LEFT_STRICT_TURN_BACKWARD_OFFSET, "slow")
@@ -195,3 +187,4 @@ class Drivetrain:
 
 	def toggle_power(self, is_on):
 		GPIO.output(self.__sleep_pin, is_on)
+		

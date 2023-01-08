@@ -555,128 +555,343 @@ class Map:
 
     def update_map(self, sensor_data):
         if self.__orientation == 'N':
-            # adding forward tiles
+            # Updating tiles in the front (middle)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['f'])
+            x = self.get_current_x_position()
+            y = self.get_current_y_position() + 4 
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position(), self.get_current_y_position() + i + 4):
-                    self.add_tile(self.get_current_x_position(), self.get_current_y_position() + i + 4, is_known = True)
+                if self.__get_tile(x, y + i):
+                    self.__get_tile(x, y + i).is_obstacle = False
+
+                else: 
+                    self.add_tile(x, y + i, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position(), self.get_current_y_position() + tile_count + 4, is_known = True, is_obstacle = True)
+                y += tile_count
 
-            # adding left tiles
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the back (middle)
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['b'])
+            y = self.get_current_y_position() - 2
+
+            for i in range(tile_count):
+                if self.__get_tile(x, y - i):
+                    self.__get_tile(x, y - i).is_obstacle = False
+
+                else:
+                    self.add_tile(x, y - i , is_known = True)
+
+            if has_obstacle:
+                y -= tile_count
+
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the front (left)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['l'])
+            x = self.get_current_x_position() - 1
+            y = self.get_current_y_position() + 4
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() - 1, self.get_current_y_position() + i + 4):
-                    self.add_tile(self.get_current_x_position() - 1, self.get_current_y_position() + i + 4, is_known = True)
+                if self.__get_tile(x, y + i):
+                    self.__get_tile(x, y + i).is_obstacle = False
+
+                else:
+                    self.add_tile(x, y + i, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() - 1, self.get_current_y_position() + tile_count + 4, is_known = True, is_obstacle = True)
+                y += tile_count
 
-            # adding right tiles
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the front (right)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['r'])
+            x = self.get_current_x_position() + 1
+            y = self.get_current_y_position() + 4
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() + 1, self.get_current_y_position() + i + 4):
-                    self.add_tile(self.get_current_x_position() + 1, self.get_current_y_position() + i + 4, is_known = True)
+                if self.__get_tile(x, y + i):
+                    self.__get_tile(x, y + i).is_obstacle = False
+
+                else:
+                    self.add_tile(x, y + i, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() + 1, self.get_current_y_position() + tile_count + 4, is_known = True, is_obstacle = True)
+                y += tile_count
+
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
 
         elif self.__orientation == 'E':
-            # adding forward tiles
+            # Updating tiles in the front (middle)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['f'])
+            x = self.get_current_x_position() + 4
+            y = self.get_current_y_position()
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() + i + 4, self.get_current_y_position()):
-                    self.add_tile(self.get_current_x_position() + i + 4, self.get_current_y_position(), is_known = True)
+                if self.__get_tile(x + i, y):
+                    self.__get_tile(x + i, y).is_obstacle = False
+
+                else: 
+                    self.add_tile(x + i, y, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() + tile_count + 4, self.get_current_y_position(), is_known = True, is_obstacle = True)
+                x += tile_count
 
-            # adding left tiles
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the back (middle)
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['b'])
+            x = self.get_current_x_position() - 2
+
+            for i in range(tile_count):
+                if self.__get_tile(x - i, y):
+                    self.__get_tile(x - i, y).is_obstacle = False
+
+                else:
+                    self.add_tile(x - i, y, is_known = True)
+
+            if has_obstacle:
+                x -= tile_count
+
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the front (left)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['l'])
+            x = self.get_current_x_position() + 4
+            y = self.get_current_y_position() + 1
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() + i + 4, self.get_current_y_position() + 1):
-                    self.add_tile(self.get_current_x_position() + i + 4, self.get_current_y_position() + 1, is_known = True)
+                if self.__get_tile(x + i, y):
+                    self.__get_tile(x + i, y).is_obstacle = False
+
+                else:
+                    self.add_tile(x + i, y, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() + tile_count + 4, self.get_current_y_position() + 1, is_known = True, is_obstacle = True)
+                x += tile_count
 
-            # adding right tiles
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the front (right)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['r'])
+            x = self.get_current_x_position() + 4
+            y = self.get_current_y_position() - 1
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() + i + 4, self.get_current_y_position() - 1):
-                    self.add_tile(self.get_current_x_position() + i + 4, self.get_current_y_position() - 1, is_known = True)
+                if self.__get_tile(x + i, y):
+                    self.__get_tile(x + i, y).is_obstacle = False
+
+                else:
+                    self.add_tile(x + i, y, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() + tile_count + 4, self.get_current_y_position() - 1, is_known = True, is_obstacle = True)
+                x += tile_count
+
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
 
         elif self.__orientation == 'S':
-            # adding forward tiles
+            # Updating tiles in the front (middle)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['f'])
+            x = self.get_current_x_position() 
+            y = self.get_current_y_position() - 4
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position(), self.get_current_y_position() - i - 4):
-                    self.add_tile(self.get_current_x_position(), self.get_current_y_position() - i - 4, is_known = True)
+                if self.__get_tile(x, y - i):
+                    self.__get_tile(x, y - i).is_obstacle = False
+
+                else: 
+                    self.add_tile(x, y - i, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position(), self.get_current_y_position() - tile_count - 4, is_known = True, is_obstacle = True)
+                y -= tile_count
 
-            # adding left tiles
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the back (middle)
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['b'])
+            y = self.get_current_y_position() + 2
+
+            for i in range(tile_count):
+                if self.__get_tile(x, y + i):
+                    self.__get_tile(x, y + i).is_obstacle = False
+
+                else:
+                    self.add_tile(x, y + i , is_known = True)
+
+            if has_obstacle:
+                y += tile_count
+
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the front (left)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['l'])
+            x = self.get_current_x_position() + 1
+            y = self.get_current_y_position() - 4
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() + 1, self.get_current_y_position() - i - 4):
-                    self.add_tile(self.get_current_x_position() + 1, self.get_current_y_position() - i - 4, is_known = True)
+                if self.__get_tile(x, y - i):
+                    self.__get_tile(x, y - i).is_obstacle = False
+
+                else:
+                    self.add_tile(x, y - i, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() + 1, self.get_current_y_position() - tile_count - 4, is_known = True, is_obstacle = True)
+                y -= tile_count
 
-            # adding right tiles
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the front (right)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['r'])
+            x = self.get_current_x_position() - 1
+            y = self.get_current_y_position() - 4
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() - 1, self.get_current_y_position() - i - 4):
-                    self.add_tile(self.get_current_x_position() - 1, self.get_current_y_position() - i - 4, is_known = True)
+                if self.__get_tile(x, y - i):
+                    self.__get_tile(x, y - i).is_obstacle = False
+
+                else:
+                    self.add_tile(x, y - i, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() - 1, self.get_current_y_position() - tile_count - 4, is_known = True, is_obstacle = True)
+                y -= tile_count
+
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
 
         elif self.__orientation == 'W':
-            # adding forward tiles
+            # Updating tiles in the front (middle)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['f'])
+            x = self.get_current_x_position() - 4
+            y = self.get_current_y_position()
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() - i - 4, self.get_current_y_position()):
-                    self.add_tile(self.get_current_x_position() - i - 4, self.get_current_y_position(), is_known = True)
+                if self.__get_tile(x - i, y):
+                    self.__get_tile(x - i, y).is_obstacle = False
+
+                else: 
+                    self.add_tile(x - i, y, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() - tile_count - 4, self.get_current_y_position(), is_known = True, is_obstacle = True)
+                x -= tile_count
 
-            # adding left tiles
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the back (middle)
+            tile_count, has_obstacle = self.__get_tile_count(sensor_data['b'])
+            x = self.get_current_x_position() + 2
+
+            for i in range(tile_count):
+                if self.__get_tile(x + i, y):
+                    self.__get_tile(x + i, y).is_obstacle = False
+
+                else:
+                    self.add_tile(x + i, y, is_known = True)
+
+            if has_obstacle:
+                x += tile_count
+
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the front (left)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['l'])
+            x = self.get_current_x_position() - 4
+            y = self.get_current_y_position() - 1
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() - i - 4, self.get_current_y_position() - 1):
-                    self.add_tile(self.get_current_x_position() - i - 4, self.get_current_y_position() - 1, is_known = True)
+                if self.__get_tile(x - i, y):
+                    self.__get_tile(x - i, y).is_obstacle = False
+
+                else:
+                    self.add_tile(x - i, y, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() - tile_count - 3, self.get_current_y_position() - 1, is_known = True, is_obstacle = True)
+                x -= tile_count
 
-            # adding right tiles
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
+
+            # Updating tiles in the front (right)
             tile_count, has_obstacle = self.__get_tile_count(sensor_data['r'])
+            x = self.get_current_x_position() - 4
+            y = self.get_current_y_position() + 1
 
             for i in range(tile_count):
-                if not self.__get_tile(self.get_current_x_position() - i - 4, self.get_current_y_position() + 1):
-                    self.add_tile(self.get_current_x_position() - i - 4, self.get_current_y_position() + 1, is_known = True)
+                if self.__get_tile(x - i, y):
+                    self.__get_tile(x - i, y).is_obstacle = False
+
+                else:
+                    self.add_tile(x - i, y, is_known = True)
 
             if has_obstacle:
-                self.add_tile(self.get_current_x_position() - tile_count - 4, self.get_current_y_position() + 1, is_known = True, is_obstacle = True)
+                x -= tile_count
+
+                if self.__get_tile(x, y):
+                    self.__get_tile(x, y).is_obstacle = True
+
+                else:
+                    self.add_tile(x, y, is_known = True, is_obstacle = True)
 
 
     def check_for_obstacles(self, direction) -> bool:

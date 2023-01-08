@@ -15,7 +15,7 @@ from Constants import Map_Constants
 # In development
 class Robot():
     __drivetrain = None
-    __computer_vision = Computer_Vision()
+    #__computer_vision = Computer_Vision()
     __sensing_system = Sensing_System()
     __remote_receiver = None
     __buzzer = Buzzer()
@@ -98,12 +98,14 @@ class Robot():
             if self.__remote_receiver.get_last_key_press() == "Forward":
                 while self.__sensing_system.is_front_clear() and self.__remote_receiver.get_last_key_press() == "Forward":
                     self.__drive('f', "fast")
+                    self.__map.update_map(self.__sensing_system.get_sensor_data())
                 
                 self.__remote_receiver.reset_last_key_press()
 
             elif self.__remote_receiver.get_last_key_press() == "Backward":
                 while self.__sensing_system.is_back_clear() and self.__remote_receiver.get_last_key_press() == "Backward":
                     self.__drive('b', "fast")
+                    self.__map.update_map(self.__sensing_system.get_sensor_data())
 
                 self.__remote_receiver.reset_last_key_press()
 
@@ -116,11 +118,11 @@ class Robot():
                 self.__remote_receiver.reset_last_key_press()
 
             elif self.__remote_receiver.get_last_key_press() == "Left micro turn":
-                self.__drivetrain.turn('l', 1)
+                self.__drivetrain.micro_turn('l')
                 self.__remote_receiver.reset_last_key_press()
 
             elif self.__remote_receiver.get_last_key_press() == "Right micro turn":
-                self.__drivetrain.turn('r', 1)
+                self.__drivetrain.micro_turn('r')
                 self.__remote_receiver.reset_last_key_press()
 
 
@@ -217,9 +219,11 @@ class Robot():
     def __check_if_stuck(self):
         if self.__sensing_system.is_front_clear():
             self.__drive('f', "slow")
+            self.__map.update_map(self.__sensing_system.get_sensor_data())
 
         elif self.__sensing_system.is_back_clear():
             self.__drive('b', "slow")
+            self.__map.update_map(self.__sensing_system.get_sensor_data())
 
         else:
             self.__buzzer.beep(5, 0.3)
