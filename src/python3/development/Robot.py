@@ -1,6 +1,7 @@
 import random
 
 from Drivetrain import Drivetrain
+from IMU import IMU
 from Computer_Vision import Computer_Vision
 from Sensing_System import Sensing_System
 from IR_Receiver import IR_Receiver
@@ -15,6 +16,7 @@ from Constants import Map_Constants
 # In development
 class Robot():
     __drivetrain = None
+    __imu = None
     #__computer_vision = Computer_Vision()
     __sensing_system = Sensing_System()
     __remote_receiver = None
@@ -29,17 +31,22 @@ class Robot():
         self.__sound_signals = sound_signals
         self.__debug = debug
 
-        self.__drivetrain = Drivetrain(imu_auto_calibrate = imu_auto_calibrate, debug = self.__debug)
+        if sound_signals:
+            self.__buzzer.sound_signal("Loading")
+
+        self.__imu = IMU(buzzer = self.__buzzer, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
+        self.__drivetrain = Drivetrain(imu = self.__imu, buzzer = self.__buzzer, imu_auto_calibrate = imu_auto_calibrate, debug = self.__debug)
         self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
 
         if sound_signals:
-            self.__buzzer.beep(3, 0.1)
+            self.__buzzer.sound_signal("Initialised")
 
 
         # Listen to remote for commands
         self.__listen_to_remote()
 
 
+    # Listens to the remote controller key presses
     def __listen_to_remote(self):
         if self.__debug:
             print("Robot: Listening to remote")
@@ -51,6 +58,7 @@ class Robot():
                     self.__autonomous_mode()
 
                 elif self.__remote_receiver.get_mode() == "Manual mode":
+                    self.__remote_receiver.reset_last_key_press()
                     self.__manual_mode()
 
             elif self.__remote_receiver.get_last_key_press() == "Clear the map":
@@ -62,6 +70,7 @@ class Robot():
                     print("The map was cleared")
     
     
+    # Lets the user give commands to the robot
     def __autonomous_mode(self):
         while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Autonomous mode":
             command = self.__remote_receiver.get_command()
@@ -91,23 +100,28 @@ class Robot():
                 self.__buzzer.play_song("He's a Pirate")
 
 
+    # Lets the user control movement of the robot using the remote controller
     def __manual_mode(self):
         self.__drivetrain.toggle_power(True)
 
         while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Manual mode":
             if self.__remote_receiver.get_last_key_press() == "Forward":
                 while self.__sensing_system.is_front_clear() and self.__remote_receiver.get_last_key_press() == "Forward":
-                    self.__drive('f', "fast")
+                    status = self.__drive('f', "fast")
+
                     self.__map.update_map(self.__sensing_system.get_sensor_data())
                 
-                self.__remote_receiver.reset_last_key_press()
+                    if not status:
+                        self.__remote_receiver.reset_last_key_press()
 
             elif self.__remote_receiver.get_last_key_press() == "Backward":
                 while self.__sensing_system.is_back_clear() and self.__remote_receiver.get_last_key_press() == "Backward":
-                    self.__drive('b', "fast")
+                    status = self.__drive('b', "fast")
+
                     self.__map.update_map(self.__sensing_system.get_sensor_data())
 
-                self.__remote_receiver.reset_last_key_press()
+                    if not status:
+                        self.__remote_receiver.reset_last_key_press()
 
             elif self.__remote_receiver.get_last_key_press() == "Left":
                 self.__turn('l')
@@ -130,7 +144,12 @@ class Robot():
         self.__drivetrain.toggle_power(False)
 
 
+    # The robot drives around and explores the room
+    # Needs to be fixed
     def __explore(self):
+        if self.__sound_signals:
+            self.__buzzer.play_song("Explore")
+
         self.__drivetrain.toggle_power(True)
 
         while self.__remote_receiver.is_start_button_pressed():
@@ -155,7 +174,12 @@ class Robot():
             self.__map.display_map()
 
 
+    # The robot drives around and explores the room until it finds an object it was searching for
+    # Needs to be fixed
     def __find_object(self, object):
+        if self.__sound_signals:
+            self.__buzzer.play_song("Explore")
+
         self.__drivetrain.toggle_power(True)
 
         while self.__remote_receiver.is_start_button_pressed() and self.__computer_vision.get_last_detected_object() != object:
@@ -190,7 +214,26 @@ class Robot():
         print("Not implemented yet!")
 
 
-    def __drive(self, direction, speed):
+    # If the robot doesn't fully pass the tile, it will move to the previous one 
+    def __reposition_on_tile(self, previous_direction, motor_steps):
+        direction = None
+        
+        if previous_direction == 'f':
+            direction = 'b'
+
+        elif previous_direction == 'b':
+            direction = 'f'
+
+
+        for step in range(motor_steps):
+            self.__drivetrain.rotate(direction, "slow")
+
+
+    # Moves one tile in a specified direction and speed
+    # Needs to be fixed
+    # Colision detection needs to be improved
+    def __drive(self, direction, speed) -> bool:
+        last_yaw_reading = self.__imu.get_yaw_value()
         is_direction_clear = None
 
         if direction == 'f':
@@ -199,23 +242,51 @@ class Robot():
         elif direction == 'b':
             is_direction_clear = self.__sensing_system.is_back_clear
 
-
-        for _ in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
+        for step in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
             if is_direction_clear():
                 self.__drivetrain.rotate(direction, speed)
+                
+                if step % (Robot_Constants.COLLISION_CHECKING_FREQUENCY) == 0:
+                    yaw = self.__imu.get_yaw_value()
+                    difference = abs(yaw - last_yaw_reading)
+
+                    if difference > Robot_Constants.MINIMUM_COLLISION_DETECTION_ANGLE:
+                        self.__reposition_on_tile(direction, step)
+                        
+                        if direction == 'f':
+                            self.__drive('b', "slow")
+
+                        elif direction == 'b':
+                            self.__drive('f', "slow")
+
+
+                        if yaw > last_yaw_reading:
+                            self.__drivetrain.turn('l', difference)
+
+                        elif yaw < last_yaw_reading:
+                            self.__drivetrain.turn('r', difference)
+
+
+                        return False
 
             else:
-                break
+                self.__reposition_on_tile(direction, step)
+        
+                return False
 
 
         self.__map.update_position(direction)
 
+        return True
+
     
+    # Turns the robot 90 degrees to the specified direction and updates orientation
     def __turn(self, direction):
         self.__drivetrain.strict_turn(direction)
         self.__map.update_orientation(direction)
 
 
+    # Checks if there are obstacles present in the front or back
     def __check_if_stuck(self):
         if self.__sensing_system.is_front_clear():
             self.__drive('f', "slow")
@@ -226,13 +297,14 @@ class Robot():
             self.__map.update_map(self.__sensing_system.get_sensor_data())
 
         else:
-            self.__buzzer.beep(5, 0.3)
+            self.__buzzer.sound_signal("Stuck")
 
             return True
 
         return False
 
 
+    # Returns the action, that the robot should take
     def __get_action(self):
         # Least visited clear direction or multiple clear directions that have been visited the same amount of times
         possible_directions = self.__get_least_visited_sides(self.__get_clear_sides())
@@ -260,6 +332,7 @@ class Robot():
             return None
 
 
+    # Returns directions that don't have obstacles
     def __get_clear_sides(self):
         clear_sides = []
 
@@ -271,8 +344,9 @@ class Robot():
         return clear_sides
 
     
+    # Returns least visited sides from clear directions
     def __get_least_visited_sides(self, directions):
-        if directions is None:
+        if not directions:
             return None
 
 
@@ -282,9 +356,10 @@ class Robot():
         for direction in directions:
             side_data[direction] = self.__map.check_visited_tiles(direction)
 
-        if side_data is None:
+        if not side_data:
             return None
-            
+
+        # Sometimes throws an error
         min_times_visited = min(side_data.values())
 
         for direction, times_visited in side_data.items():

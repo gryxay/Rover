@@ -9,6 +9,7 @@ from Constants import IMU_Constants
 
 class IMU:
     __mpu = None
+    __buzzer = None
 
     __x_accelerometer_offset = 0
     __y_accelerometer_offset = 0
@@ -26,7 +27,9 @@ class IMU:
     __debug = None
 
 
-    def __init__(self, auto_calibrate = False, debug = False):
+    def __init__(self, buzzer = None, auto_calibrate = False, debug = False):
+        self.__buzzer = buzzer
+
         self.__debug = debug
 
         if auto_calibrate:
@@ -61,6 +64,15 @@ class IMU:
             print("Waiting for IMU to stabilise yaw value...")
         
         sleep(20)
+
+
+    def __array_average(self, array):
+        sum = 0.0
+
+        for index in range(0, len(array)):
+            sum += array[index]
+
+        return sum / len(array)
 
 
     def __calibrate(self):
@@ -317,44 +329,42 @@ class IMU:
         FIFO_buffer = [0]*64
         FIFO_count_list = list()
 
-        while True:
-            FIFO_count = self.__mpu.get_FIFO_count()
-            mpu_int_status = self.__mpu.get_int_status()
+        try:
+            while True:
+                FIFO_count = self.__mpu.get_FIFO_count()
+                mpu_int_status = self.__mpu.get_int_status()
 
-            # If overflow is detected by status or fifo count we want to reset
-            if (FIFO_count == 1024) or (mpu_int_status & 0x10):
-                self.__mpu.reset_FIFO()
+                # If overflow is detected by status or fifo count we want to reset
+                if (FIFO_count == 1024) or (mpu_int_status & 0x10):
+                    self.__mpu.reset_FIFO()
 
-            # Check if fifo data is ready
-            elif (mpu_int_status & 0x02):
-                while FIFO_count < packet_size:
-                    FIFO_count = self.__mpu.get_FIFO_count()
-                    
-                FIFO_buffer = self.__mpu.get_FIFO_bytes(packet_size)
-                acceleration = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
-                quaternion = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
-                gravity = self.__mpu.DMP_get_gravity(quaternion)
+                # Check if fifo data is ready
+                elif (mpu_int_status & 0x02):
+                    while FIFO_count < packet_size:
+                        FIFO_count = self.__mpu.get_FIFO_count()
+                        
+                    FIFO_buffer = self.__mpu.get_FIFO_bytes(packet_size)
+                    acceleration = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
+                    quaternion = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
+                    gravity = self.__mpu.DMP_get_gravity(quaternion)
 
-                with self.__roll.get_lock():
-                    self.__roll.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).x
-
-
-                with self.__pitch.get_lock():
-                    self.__pitch.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).y
+                    with self.__roll.get_lock():
+                        self.__roll.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).x
 
 
-                with self.__yaw.get_lock():
-                    self.__yaw.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).z
+                    with self.__pitch.get_lock():
+                        self.__pitch.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).y
 
 
-    def __array_average(self, array):
-        sum = 0.0
+                    with self.__yaw.get_lock():
+                        self.__yaw.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).z
 
-        for index in range(0, len(array)):
-            sum += array[index]
-
-        return sum / len(array)
-
+        except:
+            if self.__buzzer:
+                self.__buzzer.sound_signal("IMU")
+                
+                # TODO
+            
 
     def get_roll_value(self):
         with self.__roll.get_lock():

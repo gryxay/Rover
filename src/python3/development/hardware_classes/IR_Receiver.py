@@ -8,8 +8,8 @@ from Constants import IR_Receiver_Constants
 
 
 class IR_Receiver:
-    __buzzer = None
     __receiver = None
+    __buzzer = None
 
     __command_queue = Queue()
     __start_button_state = Value('b', 0)
@@ -73,7 +73,7 @@ class IR_Receiver:
                     last_reading = self.__get_key("Start")
 
                     if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.1)
+                        self.__buzzer.beep(1, 0.2)
 
                     if self.__debug:
                         print("Receiver: Start button has been pressed")
@@ -87,7 +87,7 @@ class IR_Receiver:
                     last_reading = self.__get_key("Stop")
 
                     if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.1)
+                        self.__buzzer.beep(1, 0.2)
 
                     if self.__debug:
                         print("Receiver: Stop button has been pressed")
@@ -103,7 +103,7 @@ class IR_Receiver:
                     last_reading = self.__get_key("Autonomous mode")
 
                     if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.1)
+                        self.__buzzer.beep(1, 0.2)
 
                     if self.__debug:
                         print("Receiver: Mode changed to \"Autonomous\"")
@@ -117,7 +117,7 @@ class IR_Receiver:
                     last_reading = self.__get_key("Manual mode")
 
                     if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.1)
+                        self.__buzzer.beep(1, 0.2)
 
                     if self.__debug:
                         print("Receiver: Mode changed to \"Manual\"")
@@ -176,6 +176,9 @@ class IR_Receiver:
                             self.__last_key_press.value = reading.value
 
                         last_reading = reading.value
+
+                        if self.__sound_signals:
+                            self.__buzzer.beep(1, 0.1)
 
                         if self.__debug:
                             print("Receiver: Last key press set to", reading.value)
