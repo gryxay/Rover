@@ -6,6 +6,7 @@ from Constants import Buzzer_Constants
 
 # Available songs:
 # 1. "He's a Pirate"
+# 2. "Found it!"
 
 
 class Buzzer:
@@ -47,6 +48,14 @@ class Buzzer:
 
 			GPIO.output(self.__trig_pin, GPIO.HIGH)
 			sleep(delay)
+
+
+	def sound_signal(self, error_source):
+		for _ in range(Buzzer_Constants.SOUND_SIGNALS[error_source][0]):
+			if error_source in Buzzer_Constants.SOUND_SIGNALS:
+				self.beep(Buzzer_Constants.SOUND_SIGNALS[error_source][1], Buzzer_Constants.SOUND_SIGNALS[error_source][2])
+
+				sleep(Buzzer_Constants.SOUND_SIGNALS[error_source][3])
 
 	
 	def play_song(self, song_name):

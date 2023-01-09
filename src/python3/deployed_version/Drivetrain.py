@@ -1,12 +1,13 @@
 import RPi.GPIO as GPIO
 from time import sleep
 
-from IMU import IMU
-
 from Constants import Drivetrain_Constants
 
 
 class Drivetrain:
+	__imu = None
+	__buzzer = None
+
 	# Left motor
 	__dir_pin_1 = None
 	__step_pin_1 = None
@@ -17,8 +18,6 @@ class Drivetrain:
 
 	__sleep_pin = None
 
-	__imu = None
-
 	__debug = None
 
 
@@ -27,8 +26,11 @@ class Drivetrain:
 					   dir_pin_2 = Drivetrain_Constants.RIGHT_MOTOR_DIR_PIN, \
 					   step_pin_2 = Drivetrain_Constants.RIGHT_MOTOR_STEP_PIN, \
 					   sleep_pin = Drivetrain_Constants.SLEEP_PIN, \
-					   imu_auto_calibrate = False, debug = False):
-					   
+					   imu = None, buzzer = None, imu_auto_calibrate = False, debug = False):
+		
+		self.__imu = imu
+		self.__buzzer = buzzer
+
 		self.__debug = debug
 
 		# Left motor setup
@@ -51,8 +53,6 @@ class Drivetrain:
 		GPIO.setup(self.__dir_pin_2, GPIO.OUT)
 		GPIO.setup(self.__step_pin_2, GPIO.OUT)
 		GPIO.setup(self.__sleep_pin, GPIO.OUT)
-
-		self.__imu = IMU(auto_calibrate = imu_auto_calibrate, debug = self.__debug)
 
 
 	def __drive(self, direction, distance_cm, speed):
@@ -138,35 +138,40 @@ class Drivetrain:
 
 	# Works for turns up to 360 degrees
 	def turn(self, direction, degrees):
-		turning_offset = (degrees % 360.0) / 30
+		if self.__imu:
+			turning_offset = (degrees % 360.0) / 30
 
-		if direction == 'l':
-			GPIO.output(self.__dir_pin_1, GPIO.LOW)
-			GPIO.output(self.__dir_pin_2, GPIO.HIGH)
+			if direction == 'l':
+				GPIO.output(self.__dir_pin_1, GPIO.LOW)
+				GPIO.output(self.__dir_pin_2, GPIO.HIGH)
 
-			final_orientation = self.__imu.get_yaw_value() - degrees % 360.0
-			turning_offset *= -1
+				final_orientation = self.__imu.get_yaw_value() - degrees % 360.0
+				turning_offset *= -1
 
-			if final_orientation < 0:
-				final_orientation = 360.0 + final_orientation
+				if final_orientation < 0:
+					final_orientation = 360.0 + final_orientation
 
-		elif direction == 'r':
-			GPIO.output(self.__dir_pin_1, GPIO.HIGH)
-			GPIO.output(self.__dir_pin_2, GPIO.LOW)
+			elif direction == 'r':
+				GPIO.output(self.__dir_pin_1, GPIO.HIGH)
+				GPIO.output(self.__dir_pin_2, GPIO.LOW)
 
-			final_orientation = (self.__imu.get_yaw_value() + degrees % 360.0) % 360.0
+				final_orientation = (self.__imu.get_yaw_value() + degrees % 360.0) % 360.0
 
 
-		while round(self.__imu.get_yaw_value()) != round(final_orientation - turning_offset):
-			GPIO.output(self.__step_pin_1, GPIO.HIGH)
-			GPIO.output(self.__step_pin_2, GPIO.HIGH)
+			while round(self.__imu.get_yaw_value()) != round(final_orientation - turning_offset):
+				GPIO.output(self.__step_pin_1, GPIO.HIGH)
+				GPIO.output(self.__step_pin_2, GPIO.HIGH)
 
-			sleep(Drivetrain_Constants.TURNING_DELAY)
-			
-			GPIO.output(self.__step_pin_1, GPIO.LOW)
-			GPIO.output(self.__step_pin_2, GPIO.LOW)
-			
-			sleep(Drivetrain_Constants.TURNING_DELAY)
+				sleep(Drivetrain_Constants.TURNING_DELAY)
+				
+				GPIO.output(self.__step_pin_1, GPIO.LOW)
+				GPIO.output(self.__step_pin_2, GPIO.LOW)
+				
+				sleep(Drivetrain_Constants.TURNING_DELAY)
+
+		else:
+			if self.__debug:
+				print("IMU is missing!")
 
 
 	def strict_turn(self, direction):
