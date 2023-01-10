@@ -5,9 +5,6 @@ from Distance_Sensor import Distance_Sensor
 from Constants import Sensing_System_Constants
 from Constants import Robot_Constants
 
-#
-from time import time, sleep
-
 
 class Sensing_System:
     __sensors = {}
@@ -41,6 +38,7 @@ class Sensing_System:
         self.__background_process.start()
 
 
+    # Reads data from Ultrasound Distance Sensors consecutively
     def __update_sensor_data(self):
         while True:
             for direction in Robot_Constants.DIRECTIONS:
@@ -51,26 +49,30 @@ class Sensing_System:
                         self.__sensor_data[direction].value = distance
 
 
+    # Returns the distance in CM between front distance sensor and the obstacle
     def get_front_sensor_distance(self) -> float:
         with self.__sensor_data['f'].get_lock():
             return self.__sensor_data['f'].value
 
 
+    # Returns the distance in CM between the rear sensor and the obstacle
     def get_rear_sensor_distance(self) -> float:
         with self.__sensor_data['b'].get_lock():
             return self.__sensor_data['b'].value
 
 
+    # Returns the distance in CM between the left sensor and the obstacle
     def get_left_sensor_distance(self) -> float:
         with self.__sensor_data['l'].get_lock():
             return self.__sensor_data['l'].value
 
 
+    # Returns the distance in CM between the right sensor and the obstacle
     def get_right_sensor_distance(self) -> float:
         with self.__sensor_data['r'].get_lock():
             return self.__sensor_data['r'].value
 
-
+    # Returns the distance in CM between distance sensors and the obstacles
     def get_sensor_data(self) -> dict:
         return {
             'f': self.get_front_sensor_distance(),
@@ -80,6 +82,7 @@ class Sensing_System:
 	    }
 
 
+    # Returns True if there are no obstacles in the front of the robot
     def is_front_clear(self) -> bool:
         if self.get_front_sensor_distance() > Sensing_System_Constants.MIN_FRONT_DISTANCE and \
            self.get_left_sensor_distance() > Sensing_System_Constants.MIN_LEFT_DISTANCE and \
@@ -90,6 +93,7 @@ class Sensing_System:
         return False
 
 
+    # Returns True if there are no obstacles in the rear of the robot
     def is_back_clear(self) -> bool:
         if self.get_rear_sensor_distance() > Sensing_System_Constants.MIN_BACK_DISTANCE:
             return True
