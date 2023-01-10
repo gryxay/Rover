@@ -18,6 +18,7 @@ class Computer_Vision:
         Process(target = self.__detect_objects).start()
                 
 
+    # Detects objects using the camera
     def __detect_objects(self):
         while True:
             image_exists, image = self.__camera.read()
@@ -39,11 +40,13 @@ class Computer_Vision:
                             self.__last_detected_object.value = class_index
 
 
+    # Returns the last detected object
     def get_last_detected_object(self):
         with self.__last_detected_object.get_lock():
             return Computer_Vision_Constants.CLASSES[self.__last_detected_object.value]
 
 
+    # Sets the last detected object to "unknown"
     def reset_last_detected_object(self):
         with self.__last_detected_object.get_lock():
             self.__last_detected_object.value = Computer_Vision_Constants.CLASSES.index("unknown")
