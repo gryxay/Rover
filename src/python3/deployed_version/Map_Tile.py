@@ -7,14 +7,16 @@ class Map_Tile:
 
     is_known = None
     is_obstacle = None
+    is_under_robot = None
 
 
-    def __init__(self, x, y, times_visited = 0, is_known = False, is_obstacle = False):
+    def __init__(self, x, y, times_visited = 0, is_known = False, is_obstacle = False, is_under_robot = False):
         self.__x = x
         self.__y = y
         self.__times_visited = times_visited
         self.is_known = is_known
         self.is_obstacle = is_obstacle
+        self.is_under_robot = is_under_robot
     
 
     def get_x_position(self) -> int:

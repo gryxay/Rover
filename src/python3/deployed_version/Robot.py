@@ -15,32 +15,24 @@ from Constants import Map_Constants
 
 # In development
 class Robot():
-    __drivetrain = None
-    __imu = None
-    #__computer_vision = Computer_Vision()
-    __sensing_system = Sensing_System()
-    __remote_receiver = None
-    __buzzer = Buzzer()
-    __map = Map()
-
-    __sound_signals = None
-    __debug = None
-
-
     def __init__(self, imu_auto_calibrate = True, sound_signals = True, debug = False):
         self.__sound_signals = sound_signals
         self.__debug = debug
 
+        self.__buzzer = Buzzer()
+
         if sound_signals:
             self.__buzzer.sound_signal("Loading")
 
-        self.__imu = IMU(buzzer = self.__buzzer, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
-        self.__drivetrain = Drivetrain(imu = self.__imu, buzzer = self.__buzzer, imu_auto_calibrate = imu_auto_calibrate, debug = self.__debug)
         self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+        self.__imu = IMU(buzzer = self.__buzzer, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
+        self.__drivetrain = Drivetrain(imu = self.__imu, debug = self.__debug)
+        #self.__computer_vision = Computer_Vision()
+        self.__sensing_system = Sensing_System()
+        self.__map = Map()
 
         if sound_signals:
             self.__buzzer.sound_signal("Initialised")
-
 
         # Listen to remote for commands
         self.__listen_to_remote()
@@ -139,7 +131,6 @@ class Robot():
                 self.__drivetrain.micro_turn('r')
                 self.__remote_receiver.reset_last_key_press()
 
-
         self.__map.display_map()
         self.__drivetrain.toggle_power(False)
 
@@ -147,6 +138,8 @@ class Robot():
     # The robot drives around and explores the room
     # Needs to be fixed
     def __explore(self):
+        last_action = None
+
         if self.__sound_signals:
             self.__buzzer.play_song("Explore")
 
@@ -155,7 +148,8 @@ class Robot():
         while self.__remote_receiver.is_start_button_pressed():
             self.__map.update_map(self.__sensing_system.get_sensor_data())
 
-            action = self.__get_action()
+            action = self.__get_action(last_action)
+            last_action = action
 
             if action == 'f' or action == 'b':
                 self.__drive(action, "fast")
@@ -167,7 +161,6 @@ class Robot():
                 if self.__check_if_stuck():
                     break
 
-
         self.__drivetrain.toggle_power(False)
 
         if self.__debug:
@@ -177,6 +170,8 @@ class Robot():
     # The robot drives around and explores the room until it finds an object it was searching for
     # Needs to be fixed
     def __find_object(self, object):
+        last_action = None
+
         if self.__sound_signals:
             self.__buzzer.play_song("Explore")
 
@@ -185,7 +180,8 @@ class Robot():
         while self.__remote_receiver.is_start_button_pressed() and self.__computer_vision.get_last_detected_object() != object:
             self.__map.update_map(self.__sensing_system.get_sensor_data())
 
-            action = self.__get_action()
+            action = self.__get_action(last_action)
+            last_action = action
 
             if action == 'f' or action == 'b':
                 self.__drive(action, "fast")
@@ -205,6 +201,7 @@ class Robot():
         if self.__sound_signals:
             self.__buzzer.play_song("Found it!")
 
+
         if self.__debug:
             self.__map.display_map()
 
@@ -217,6 +214,7 @@ class Robot():
     # If the robot doesn't fully pass the tile, it will move to the previous one 
     def __reposition_on_tile(self, previous_direction, motor_steps):
         direction = None
+        delay = self.__drivetrain.get_delay("slow")
         
         if previous_direction == 'f':
             direction = 'b'
@@ -224,17 +222,17 @@ class Robot():
         elif previous_direction == 'b':
             direction = 'f'
 
+        self.__drivetrain.set_direction(direction)
 
-        for step in range(motor_steps):
-            self.__drivetrain.rotate(direction, "slow")
+        for _ in range(motor_steps):
+            self.__drivetrain.rotate_one_step(delay)
 
 
     # Moves one tile in a specified direction and speed
-    # Needs to be fixed
-    # Colision detection needs to be improved
     def __drive(self, direction, speed) -> bool:
-        last_yaw_reading = self.__imu.get_yaw_value()
+        delay = self.__drivetrain.get_delay(speed)
         is_direction_clear = None
+        initial_yaw_reading = self.__imu.get_yaw_value()
 
         if direction == 'f':
             is_direction_clear = self.__sensing_system.is_front_clear
@@ -242,30 +240,31 @@ class Robot():
         elif direction == 'b':
             is_direction_clear = self.__sensing_system.is_back_clear
 
+        self.__drivetrain.set_direction(direction)
+
         for step in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
             if is_direction_clear():
-                self.__drivetrain.rotate(direction, speed)
+                self.__drivetrain.rotate_one_step(delay)
                 
                 if step % (Robot_Constants.COLLISION_CHECKING_FREQUENCY) == 0:
                     yaw = self.__imu.get_yaw_value()
-                    difference = abs(yaw - last_yaw_reading)
+                    difference = abs(yaw - initial_yaw_reading)
 
                     if difference > Robot_Constants.MINIMUM_COLLISION_DETECTION_ANGLE:
                         self.__reposition_on_tile(direction, step)
                         
                         if direction == 'f':
-                            self.__drive('b', "slow")
+                            self.__drivetrain.drive('b', Map_Constants.TILE_SIZE, "slow")
 
                         elif direction == 'b':
-                            self.__drive('f', "slow")
+                            self.__drivetrain.drive('f', Map_Constants.TILE_SIZE, "slow")
 
 
-                        if yaw > last_yaw_reading:
+                        if yaw > initial_yaw_reading:
                             self.__drivetrain.turn('l', difference)
 
-                        elif yaw < last_yaw_reading:
+                        elif yaw < initial_yaw_reading:
                             self.__drivetrain.turn('r', difference)
-
 
                         return False
 
@@ -278,6 +277,35 @@ class Robot():
         self.__map.update_position(direction)
 
         return True
+
+    # old version (without bump detection)
+    '''
+    def __drive(self, direction, speed) -> bool:
+        delay = self.__drivetrain.get_delay(speed)
+        is_direction_clear = None
+
+        if direction == 'f':
+            is_direction_clear = self.__sensing_system.is_front_clear
+                    
+        elif direction == 'b':
+            is_direction_clear = self.__sensing_system.is_back_clear
+
+        self.__drivetrain.set_direction(direction)
+
+        for step in range(Drivetrain_Constants.CM * Map_Constants.TILE_SIZE):
+            if is_direction_clear():
+                self.__drivetrain.rotate_one_step(delay)
+                
+            else:
+                self.__reposition_on_tile(direction, step)
+        
+                return False
+
+
+        self.__map.update_position(direction)
+
+        return True
+    '''
 
     
     # Turns the robot 90 degrees to the specified direction and updates orientation
@@ -305,9 +333,16 @@ class Robot():
 
 
     # Returns the action, that the robot should take
-    def __get_action(self):
+    def __get_action(self, last_action):
         # Least visited clear direction or multiple clear directions that have been visited the same amount of times
         possible_directions = self.__get_least_visited_sides(self.__get_clear_sides())
+
+        if last_action == 'l':
+            possible_directions.remove('r')
+
+        elif last_action == 'r':
+            possible_directions.remove('l')
+
 
         if 'f' in possible_directions:
             return 'f'
@@ -340,7 +375,6 @@ class Robot():
             if not self.__map.check_for_obstacles(direction):
                 clear_sides.append(direction)
 
-
         return clear_sides
 
     
@@ -348,7 +382,6 @@ class Robot():
     def __get_least_visited_sides(self, directions):
         if not directions:
             return None
-
 
         side_data = {}
         least_visited_sides = []
@@ -359,13 +392,11 @@ class Robot():
         if not side_data:
             return None
 
-        # Sometimes throws an error
         min_times_visited = min(side_data.values())
 
         for direction, times_visited in side_data.items():
             if times_visited == min_times_visited:
                 least_visited_sides.append(direction)
-
 
         return least_visited_sides
 
