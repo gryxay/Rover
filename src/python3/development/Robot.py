@@ -15,28 +15,21 @@ from Constants import Map_Constants
 
 # In development
 class Robot():
-    __drivetrain = None
-    __imu = None
-    #__computer_vision = Computer_Vision()
-    __sensing_system = Sensing_System()
-    __remote_receiver = None
-    __buzzer = Buzzer()
-    __map = Map()
-
-    __sound_signals = None
-    __debug = None
-
-
     def __init__(self, imu_auto_calibrate = True, sound_signals = True, debug = False):
         self.__sound_signals = sound_signals
         self.__debug = debug
 
+        self.__buzzer = Buzzer()
+
         if sound_signals:
             self.__buzzer.sound_signal("Loading")
 
+        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
         self.__imu = IMU(buzzer = self.__buzzer, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
         self.__drivetrain = Drivetrain(imu = self.__imu, debug = self.__debug)
-        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+        #self.__computer_vision = Computer_Vision()
+        self.__sensing_system = Sensing_System()
+        self.__map = Map()
 
         if sound_signals:
             self.__buzzer.sound_signal("Initialised")
@@ -221,6 +214,7 @@ class Robot():
     # If the robot doesn't fully pass the tile, it will move to the previous one 
     def __reposition_on_tile(self, previous_direction, motor_steps):
         direction = None
+        delay = self.__drivetrain.get_delay("slow")
         
         if previous_direction == 'f':
             direction = 'b'
@@ -228,9 +222,10 @@ class Robot():
         elif previous_direction == 'b':
             direction = 'f'
 
+        self.__drivetrain.set_direction(direction)
 
         for _ in range(motor_steps):
-            self.__drivetrain.rotate(direction, "slow")
+            self.__drivetrain.rotate_one_step(delay)
 
 
     # Moves one tile in a specified direction and speed

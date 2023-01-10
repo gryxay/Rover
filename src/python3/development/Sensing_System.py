@@ -7,18 +7,6 @@ from Constants import Robot_Constants
 
 
 class Sensing_System:
-    __sensors = {}
-
-    __sensor_data = {
-        'f': Value('f', float(Sensing_System_Constants.MIN_FRONT_DISTANCE + 1)),
-        'b': Value('f', float(Sensing_System_Constants.MIN_BACK_DISTANCE + 1)),
-        'l': Value('f', float(Sensing_System_Constants.MIN_LEFT_DISTANCE + 1)),
-        'r': Value('f', float(Sensing_System_Constants.MIN_RIGHT_DISTANCE + 1))
-    }
-
-    __background_process = None
-
-
     def __init__(self, front_sensor_trig_pin = Sensing_System_Constants.FRONT_SENSOR_TRIG_PIN, \
                        front_sensor_echo_pin = Sensing_System_Constants.FRONT_SENSOR_ECHO_PIN, \
                        rear_sensor_trig_pin = Sensing_System_Constants.REAR_SENSOR_TRIG_PIN, \
@@ -28,10 +16,19 @@ class Sensing_System:
                        right_sensor_trig_pin = Sensing_System_Constants.RIGHT_SENSOR_TRIG_PIN, \
                        right_sensor_echo_pin = Sensing_System_Constants.RIGHT_SENSOR_ECHO_PIN):
 
+        self.__sensors = {}
+
         self.__sensors['f'] = Distance_Sensor(front_sensor_trig_pin, front_sensor_echo_pin)
         self.__sensors['b'] = Distance_Sensor(rear_sensor_trig_pin, rear_sensor_echo_pin)
         self.__sensors['l'] = Distance_Sensor(left_sensor_trig_pin, left_sensor_echo_pin)
         self.__sensors['r'] = Distance_Sensor(right_sensor_trig_pin, right_sensor_echo_pin)
+
+        self.__sensor_data = {
+            'f': Value('f', float(Sensing_System_Constants.MIN_FRONT_DISTANCE + 1)),
+            'b': Value('f', float(Sensing_System_Constants.MIN_BACK_DISTANCE + 1)),
+            'l': Value('f', float(Sensing_System_Constants.MIN_LEFT_DISTANCE + 1)),
+            'r': Value('f', float(Sensing_System_Constants.MIN_RIGHT_DISTANCE + 1))
+        }
 
         # Start a process, that constantly updates distance sensor in the background
         self.__background_process = Process(target = self.__update_sensor_data)

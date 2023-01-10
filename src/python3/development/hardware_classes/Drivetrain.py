@@ -5,19 +5,6 @@ from Constants import Drivetrain_Constants
 
 
 class Drivetrain:
-	__imu = None
-
-	__left_motor_dir_pin = None
-	__left_motor_step_pin = None
-	
-	__right_motor_dir_pin = None
-	__right_motor_step_pin = None
-
-	__sleep_pin = None
-
-	__debug = None
-
-
 	def __init__(self, left_motor_dir_pin = Drivetrain_Constants.LEFT_MOTOR_DIR_PIN, \
 				 	   left_motor_step_pin = Drivetrain_Constants.LEFT_MOTOR_STEP_PIN, \
 					   right_motor_dir_pin = Drivetrain_Constants.RIGHT_MOTOR_DIR_PIN, \
@@ -98,7 +85,7 @@ class Drivetrain:
 		self.set_direction(direction)
 
 		for _ in range(round(distance_cm * Drivetrain_Constants.CM)):
-			self.rotate_one_step(direction, delay)
+			self.rotate_one_step(delay)
 
 
 	# Turns the robot to the specified direction a tiny bit
@@ -106,7 +93,7 @@ class Drivetrain:
 	def micro_turn(self, direction):
 		delay = self.get_delay("turning")
 
-		self.__set_direction(direction)
+		self.set_direction(direction)
 		
 		for _ in range(Drivetrain_Constants.MICRO_TURN_STEPS):
 			self.rotate_one_step(delay)
@@ -130,7 +117,7 @@ class Drivetrain:
 			elif direction == 'r':
 				final_orientation = (self.__imu.get_yaw_value() + degrees % 360.0) % 360.0
 
-			self.__set_direction(direction)
+			self.set_direction(direction)
 
 			while round(self.__imu.get_yaw_value()) != round(final_orientation - turning_offset):
 				self.rotate_one_step(delay)
