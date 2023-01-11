@@ -1,5 +1,4 @@
-from multiprocessing import Process, Queue, Value
-from time import sleep
+from multiprocessing import Process, Event, Queue, Value
 import evdev
 
 from Buzzer import Buzzer
@@ -8,28 +7,24 @@ from Constants import IR_Receiver_Constants
 
 
 class IR_Receiver:
-    __receiver = None
-    __buzzer = None
-
-    __command_queue = Queue()
-    __start_button_state = Value('b', 0)
-    __last_key_press = Value('i', 0)
-
-    # 0 - "Autonomous mode"; 1 - "Manual mode"
-    __mode = Value('b', 0)
-
-    __background_process = None
-
-    __sound_signals = None
-    __debug = None
-
-
-    def __init__(self, buzzer, sound_signals = True, debug = False):
+    def __init__(self, buzzer = None, sound_signals = True, debug = False):
         self.__sound_signals = sound_signals
         self.__debug = debug
         
         self.__buzzer = buzzer
         self.__receiver = self.__get_device()
+
+        self.__command_queue = Queue()
+        self.__start_button_state = Value('b', 0)
+        self.__last_key_press = Value('i', 0)
+
+        # 0 - "Autonomous"; 1 - "Manual"
+        self.__mode = Value('b', 0)
+
+        self.__termination_event = Event()
+
+        if self.__debug:
+            print("IR Receiver: Starting a background process")
 
         # Start a process, that constantly reads IR receiver data
         self.__background_process = Process(target = self.__receive_command_keys)
@@ -42,164 +37,145 @@ class IR_Receiver:
         for device in devices:
             if (device.name == "gpio_ir_recv"):
                 if self.__debug:
-                    print("Receiver: Using device", device.path, "\n")
+                    print("IR Receiver: Using device", device.path)
 
                 return device
 
         if self.__debug:
-            print("Receiver: No device found!")
+            print("IR Receiver: No device found!")
 
 
-    def __receive_command_keys(self):
-        last_reading = None
-
-        while True:
-            reading = self.__receiver.read_one()
-
-            if reading:
-                start_button_state = None
-                mode = None
-
-                with self.__start_button_state.get_lock():
-                    start_button_state = self.__start_button_state.value
-
-                with self.__mode.get_lock():
-                    mode = self.__mode.value
-
-                if reading.value == self.__get_key("Start") and start_button_state != 1:
-                    with self.__start_button_state.get_lock():
-                        self.__start_button_state.value = 1
-
-                    last_reading = self.__get_key("Start")
-
-                    if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.2)
-
-                    if self.__debug:
-                        print("Receiver: Start button has been pressed")
-
-                    continue
-
-                elif reading.value == self.__get_key("Stop") and start_button_state != 0:
-                    with self.__start_button_state.get_lock():
-                        self.__start_button_state.value = 0
-
-                    last_reading = self.__get_key("Stop")
-
-                    if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.2)
-
-                    if self.__debug:
-                        print("Receiver: Stop button has been pressed")
-
-                    continue
-
-                elif reading.value == self.__get_key("Autonomous mode") and mode == 1:
-                    with self.__mode.get_lock():
-                        self.__mode.value = 0
-
-                    self.__clear_queue()
-
-                    last_reading = self.__get_key("Autonomous mode")
-
-                    if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.2)
-
-                    if self.__debug:
-                        print("Receiver: Mode changed to \"Autonomous\"")
-
-                    continue
-
-                elif reading.value == self.__get_key("Manual mode") and mode == 0:
-                    with self.__mode.get_lock():
-                        self.__mode.value = 1
-
-                    last_reading = self.__get_key("Manual mode")
-
-                    if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.2)
-
-                    if self.__debug:
-                        print("Receiver: Mode changed to \"Manual\"")
-
-                    continue
-
-                elif reading.value == self.__get_key("Clear the map") and reading.value != last_reading:
-                    last_reading = reading.value
-
-                    with self.__last_key_press.get_lock():
-                        self.__last_key_press.value = reading.value
-
-                    if self.__sound_signals:
-                        self.__buzzer.beep(1, 0.3)
-
-                    if self.__debug:
-                        print("Receiver: Clear the map key was pressed")
-
-                    continue
-
-
-                # If remote is in Autonomous mode
-                if mode == 0:
-                    if reading.value == self.__get_key("Clear queue") and reading.value != last_reading:
-                        last_reading = reading.value
-                        
-                        self.__clear_queue()
-
-                        if self.__sound_signals:
-                            self.__buzzer.beep(1, 0.3)
-
-                        continue
-
-                    elif str(reading.value) in IR_Receiver_Constants.KEYBINDS and reading.value != last_reading:
-                        last_reading = reading.value
-
-                        self.__command_queue.put(reading.value)
-
-                        if self.__sound_signals:
-                            self.__buzzer.beep(1, 0.1)
-
-                        if self.__debug:
-                            print("Receiver: Key added to the queue:", reading.value)
-
-                        continue
-
-                # If remote is in Manual mode
-                elif mode == 1:
-                    last_key_press = None
-
-                    with self.__last_key_press.get_lock():
-                        last_key_press = self.__last_key_press.value
-
-                    if str(reading.value) in IR_Receiver_Constants.KEYBINDS and reading.value != last_key_press:
-                        with self.__last_key_press.get_lock():
-                            self.__last_key_press.value = reading.value
-
-                        last_reading = reading.value
-
-                        if self.__sound_signals:
-                            self.__buzzer.beep(1, 0.1)
-
-                        if self.__debug:
-                            print("Receiver: Last key press set to", reading.value)
-
-    
-    def __get_key(self, value):
-        for key, val in IR_Receiver_Constants.KEYBINDS.items():
+    def __get_key(self, value, keybinds):
+        for key, val in keybinds.items():
             if value == val:
-                return int(key)
+                return key
 
         return None
 
 
     def __clear_queue(self):
         if self.__debug:
-            print("Receiver: Clearing the queue")
+            print("IR Receiver: Clearing the queue")
 
         while not self.__command_queue.empty():
             self.__command_queue.get()
 
 
+    def __main_keybind_handler(self, signal_key):
+        keybinds = IR_Receiver_Constants.MAIN_KEYBINDS
+        was_handled = False
+
+        if signal_key == self.__get_key("Start", keybinds) and not self.is_start_button_pressed():
+            with self.__start_button_state.get_lock():
+                self.__start_button_state.value = 1
+
+            was_handled = True
+
+        elif signal_key == self.__get_key("Stop", keybinds) and self.is_start_button_pressed():
+            with self.__start_button_state.get_lock():
+                self.__start_button_state.value = 0
+
+            was_handled = True
+
+        elif signal_key == self.__get_key("Autonomous", keybinds) and self.get_mode() == "Manual":
+            with self.__mode.get_lock():
+                self.__mode.value = 0
+
+            was_handled = True
+
+        elif signal_key == self.__get_key("Manual", keybinds) and self.get_mode() == "Autonomous":
+            with self.__mode.get_lock():
+                self.__mode.value = 1
+
+            was_handled = True
+
+        elif signal_key == self.__get_key("Clear the map", keybinds) and self.get_last_button_press() != "Clear the map":
+            was_handled = True
+            
+
+        if was_handled:
+            with self.__last_key_press.get_lock():
+                self.__last_key_press.value = int(signal_key)
+
+
+        if self.__buzzer and self.__sound_signals:
+            self.__buzzer.beep(1, 0.3)
+
+        
+        if self.__debug:
+            print("IR Receiver (Main Keybinds):", keybinds[signal_key], "button was pressed!")
+
+
+    def __autonomous_mode_keybind_handler(self, signal_key):
+        keybinds = IR_Receiver_Constants.AUTONOMOUS_MODE_KEYBINDS
+        was_handled = False
+
+        if signal_key == self.__get_key("Clear queue", keybinds) and self.get_last_button_press() != "Clear queue":
+            self.__clear_queue()
+
+            was_handled = True
+
+        elif signal_key in keybinds and self.get_last_button_press() != keybinds[signal_key]:
+            self.__command_queue.put(signal_key)
+
+            was_handled = True
+
+            if self.__debug:
+                print("IR Receiver: Item >", keybinds[signal_key], "< was added to the queue!")
+        
+        if was_handled:
+            with self.__last_key_press.get_lock():
+                self.__last_key_press.value = int(signal_key)
+
+
+        if self.__buzzer and self.__sound_signals:
+            self.__buzzer.beep(1, 0.1)
+
+
+        if self.__debug:
+            print("IR Receiver (Autonomous Mode Keybinds):", keybinds[signal_key], "button was pressed!")
+
+
+    def __manual_mode_keybind_handler(self, signal_key):
+        keybinds = IR_Receiver_Constants.MANUAL_MODE_KEYBINDS
+
+        if signal_key in keybinds and self.get_last_button_press() != keybinds[signal_key]:
+            with self.__last_key_press.get_lock():
+                self.__last_key_press.value = int(signal_key)
+
+
+        if self.__buzzer and self.__sound_signals:
+            self.__buzzer.beep(1, 0.1)
+
+
+        if self.__debug:
+            print("IR Receiver (Manual Mode Keybinds):", keybinds[signal_key], "button was pressed!")
+
+
+    def __receive_command_keys(self):
+        while not self.__termination_event.is_set():
+            signal_key = self.__receiver.read_one()
+
+            if signal_key:
+                signal_key = str(signal_key.value)
+
+                # Main keybinds
+                if signal_key in IR_Receiver_Constants.MAIN_KEYBINDS:
+    
+                   self.__main_keybind_handler(signal_key)
+
+                # Autonomous mode keybinds
+                elif self.get_mode() == "Autonomous" and signal_key in IR_Receiver_Constants.AUTONOMOUS_MODE_KEYBINDS:
+                
+                   self.__autonomous_mode_keybind_handler(signal_key)
+
+                # Manual mode Keybinds
+                elif self.get_mode() == "Manual" and signal_key in IR_Receiver_Constants.MANUAL_MODE_KEYBINDS:
+
+                   self.__manual_mode_keybind_handler(signal_key)
+
+
+    # Returns True if start button is pressed
     def is_start_button_pressed(self):
         with self.__start_button_state.get_lock():
             if self.__start_button_state.value == 0:
@@ -208,12 +184,19 @@ class IR_Receiver:
         return True
 
 
+    # Sets start button state to OFF
+    def reset_start_button_state(self):
+        with self.__start_button_state.get_lock():
+            self.__start_button_state.value = 0
+
+
+    # Returns mode of the remote
     def get_mode(self):
         with self.__mode.get_lock():
             if self.__mode.value == 0:
-                return "Autonomous mode"
+                return "Autonomous"
         
-        return "Manual mode"
+        return "Manual"
 
 
     # Should be used in Autonomous mode
@@ -221,27 +204,33 @@ class IR_Receiver:
         if self.__command_queue.empty():
             return None
 
-        command = IR_Receiver_Constants.KEYBINDS[str(self.__command_queue.get())]
-
-        if command == "Unsigned":
-            command = self.get_command()
-
-        return command
+        return IR_Receiver_Constants.AUTONOMOUS_MODE_KEYBINDS[str(self.__command_queue.get())]
 
 
     # Should be used in Manual mode
-    def get_last_key_press(self):
+    def get_last_button_press(self):
         last_key_press = None
 
         with self.__last_key_press.get_lock():
-            last_key_press = self.__last_key_press.value
+            last_key_press = str(self.__last_key_press.value)
 
-        if str(last_key_press) in IR_Receiver_Constants.KEYBINDS:
-            return IR_Receiver_Constants.KEYBINDS[str(last_key_press)]
+        if last_key_press in IR_Receiver_Constants.MAIN_KEYBINDS:
+            return IR_Receiver_Constants.MAIN_KEYBINDS[last_key_press]
+
+        if last_key_press in IR_Receiver_Constants.AUTONOMOUS_MODE_KEYBINDS and self.get_mode() == "Autonomous":
+            return IR_Receiver_Constants.AUTONOMOUS_MODE_KEYBINDS[last_key_press]
+
+        if last_key_press in IR_Receiver_Constants.MANUAL_MODE_KEYBINDS and self.get_mode() == "Manual":
+            return IR_Receiver_Constants.MANUAL_MODE_KEYBINDS[last_key_press]
 
         return None
 
 
-    def reset_last_key_press(self):
+
+    def reset_last_button_press(self):
         with self.__last_key_press.get_lock():
             self.__last_key_press.value = 0
+
+
+    def terminate_background_process(self):
+        self.__termination_event.set()

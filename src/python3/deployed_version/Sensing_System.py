@@ -1,4 +1,4 @@
-from multiprocessing import Process, Value
+from multiprocessing import Process, Event, Value
 
 from Distance_Sensor import Distance_Sensor
 
@@ -14,7 +14,13 @@ class Sensing_System:
                        left_sensor_trig_pin = Sensing_System_Constants.LEFT_SENSOR_TRIG_PIN, \
                        left_sensor_echo_pin = Sensing_System_Constants.LEFT_SENSOR_ECHO_PIN, \
                        right_sensor_trig_pin = Sensing_System_Constants.RIGHT_SENSOR_TRIG_PIN, \
-                       right_sensor_echo_pin = Sensing_System_Constants.RIGHT_SENSOR_ECHO_PIN):
+                       right_sensor_echo_pin = Sensing_System_Constants.RIGHT_SENSOR_ECHO_PIN, \
+                       debug = False):
+
+        self.__debug = debug
+
+        if self.__debug:
+            print("Sensing System: Initialising Distance Sensors")
 
         self.__sensors = {}
 
@@ -30,6 +36,11 @@ class Sensing_System:
             'r': Value('f', float(Sensing_System_Constants.MIN_RIGHT_DISTANCE + 1))
         }
 
+        self.__termination_event = Event()
+
+        if self.__debug:
+            print("Sensing System: Starting a background process")
+
         # Start a process, that constantly updates distance sensor in the background
         self.__background_process = Process(target = self.__update_sensor_data)
         self.__background_process.start()
@@ -37,7 +48,7 @@ class Sensing_System:
 
     # Reads data from Ultrasound Distance Sensors consecutively
     def __update_sensor_data(self):
-        while True:
+        while not self.__termination_event.is_set():
             for direction in Robot_Constants.DIRECTIONS:
                 distance = self.__sensors[direction].get_distance()
 
@@ -96,3 +107,7 @@ class Sensing_System:
             return True
         
         return False
+
+
+    def terminate_background_process(self):
+        self.__termination_event.set()

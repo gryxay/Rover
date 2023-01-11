@@ -1,11 +1,16 @@
-from multiprocessing import Process, Value
+from multiprocessing import Process, Event, Value
 import cv2
 
 from Constants import Computer_Vision_Constants
 
 
 class Computer_Vision:
-    def __init__(self):
+    def __init__(self, debug = False):
+        self.__debug = debug
+
+        if self.__debug:
+            print("Computer Vision: Initialising the camera")
+
         self.__camera = cv2.VideoCapture(0)
         self.__camera.set(cv2.CAP_PROP_FRAME_WIDTH, Computer_Vision_Constants.IMAGE_WIDTH)
         self.__camera.set(cv2.CAP_PROP_FRAME_HEIGHT, Computer_Vision_Constants.IMAGE_HEIGHT)
@@ -15,12 +20,18 @@ class Computer_Vision:
 
         self.__last_detected_object = Value("i", Computer_Vision_Constants.CLASSES.index("unknown"))
 
-        Process(target = self.__detect_objects).start()
-                
+        self.__termination_event = Event()
+        
+        if self.__debug:
+            print("Computer Vision: Starting a background process")
+
+        self.__background_process = Process(target = self.__detect_objects)
+        self.__background_process.start()
+
 
     # Detects objects using the camera
     def __detect_objects(self):
-        while True:
+        while not self.__termination_event.is_set():
             image_exists, image = self.__camera.read()
             
             if image_exists:
@@ -50,3 +61,7 @@ class Computer_Vision:
     def reset_last_detected_object(self):
         with self.__last_detected_object.get_lock():
             self.__last_detected_object.value = Computer_Vision_Constants.CLASSES.index("unknown")
+
+
+    def terminate_background_process(self):
+        self.__termination_event.set()

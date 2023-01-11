@@ -5,15 +5,19 @@ from Constants import Buzzer_Constants
 
 
 # Available songs:
-# 1. "He's a Pirate"
+# 1. "Exploring"
 # 2. "Found it!"
+# 3. "Mario underworld"
+# 4. "He's a Pirate"
 
 
 class Buzzer:
-	__trig_pin = None
+	def __init__(self, trig_pin = Buzzer_Constants.TRIG_PIN, debug = False):
+		self.__debug = debug
 
-	
-	def __init__(self, trig_pin = Buzzer_Constants.TRIG_PIN):
+		if self.__debug:
+			print("Buzzer: Setting up GPIO pins")
+
 		self.__trig_pin = trig_pin
 
 		GPIO.setwarnings(False)
@@ -72,4 +76,4 @@ class Buzzer:
 					sleep(note_length)
 		
 		else:
-			print("Song \"" + song_name + "\" doesn't exist!")
+			print("Buzzer: Song \"" + song_name + "\" doesn't exist!")

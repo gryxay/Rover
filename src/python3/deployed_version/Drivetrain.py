@@ -15,7 +15,13 @@ class Drivetrain:
 		
 		self.__debug = debug
 
+		if self.__debug and imu:
+			print("Drivetrain: Adding the IMU")
+
 		self.__imu = imu
+
+		if self.__debug:
+			print("Drivetrain: Setting up GPIO pins")
 
 		self.__left_motor_dir_pin = left_motor_dir_pin
 		self.__left_motor_step_pin = left_motor_step_pin
