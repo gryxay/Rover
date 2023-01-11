@@ -1,3 +1,4 @@
+from time import sleep
 import random
 
 from Drivetrain import Drivetrain
@@ -13,50 +14,80 @@ from Constants import Drivetrain_Constants
 from Constants import Map_Constants
 
 
-# In development
 class Robot():
     def __init__(self, imu_auto_calibrate = True, sound_signals = True, debug = False):
         self.__sound_signals = sound_signals
         self.__debug = debug
 
-        self.__buzzer = Buzzer()
+        self.__buzzer = Buzzer(debug = self.__debug)
+        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
 
         if sound_signals:
             self.__buzzer.sound_signal("Loading")
 
-        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+        self.__boot_handler()
+
         self.__imu = IMU(buzzer = self.__buzzer, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
         self.__drivetrain = Drivetrain(imu = self.__imu, debug = self.__debug)
-        #self.__computer_vision = Computer_Vision()
-        self.__sensing_system = Sensing_System()
+        #self.__computer_vision = Computer_Vision(debug = self.__debug)
+        self.__sensing_system = Sensing_System(debug = self.__debug)
         self.__map = Map()
 
         if sound_signals:
-            self.__buzzer.sound_signal("Initialised")
+            self.__buzzer.sound_signal("Ready")
 
         # Listen to remote for commands
         self.__listen_to_remote()
 
 
+    def __boot_handler(self):
+        if self.__debug:
+            print("Robot: Waiting for a signal to continue loading...")
+            print("Using the remote controller:")
+            print("> Press ON to continue")
+            print("> Press OFF to cancel")
+
+        while True:
+            if self.__remote_receiver.get_last_button_press() == "Start":
+                self.__remote_receiver.reset_start_button_state()
+
+                if self.__debug:
+                    print("Robot: Continuing...")
+
+                return
+
+            elif self.__remote_receiver.get_last_button_press() == "Stop":
+                self.__remote_receiver.terminate_background_process()
+
+                sleep(2)
+
+                if self.__sound_signals:
+                    self.__buzzer.play_song("")
+
+                if self.__debug:
+                    print("Robot: Canceling...")
+
+                exit(0)
+
+
     # Listens to the remote controller key presses
     def __listen_to_remote(self):
         if self.__debug:
-            print("Robot: Listening to remote")
-
+            print("Robot: Listening to the remote controller")
 
         while True:
             if self.__remote_receiver.is_start_button_pressed():
-                if self.__remote_receiver.get_mode() == "Autonomous mode":
+                if self.__remote_receiver.get_mode() == "Autonomous":
                     self.__autonomous_mode()
 
-                elif self.__remote_receiver.get_mode() == "Manual mode":
-                    self.__remote_receiver.reset_last_key_press()
+                elif self.__remote_receiver.get_mode() == "Manual":
+                    self.__remote_receiver.reset_last_button_press()
                     self.__manual_mode()
 
-            elif self.__remote_receiver.get_last_key_press() == "Clear the map":
+            elif self.__remote_receiver.get_last_button_press() == "Clear the map":
                 self.__map.reset()
 
-                self.__remote_receiver.reset_last_key_press()
+                self.__remote_receiver.reset_last_button_press()
 
                 if self.__debug:
                     print("The map was cleared")
@@ -64,7 +95,7 @@ class Robot():
     
     # Lets the user give commands to the robot
     def __autonomous_mode(self):
-        while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Autonomous mode":
+        while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Autonomous":
             command = self.__remote_receiver.get_command()
 
             if command == "Explore":
@@ -96,52 +127,51 @@ class Robot():
     def __manual_mode(self):
         self.__drivetrain.toggle_power(True)
 
-        while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Manual mode":
-            if self.__remote_receiver.get_last_key_press() == "Forward":
-                while self.__sensing_system.is_front_clear() and self.__remote_receiver.get_last_key_press() == "Forward":
+        while self.__remote_receiver.is_start_button_pressed() and self.__remote_receiver.get_mode() == "Manual":
+            if self.__remote_receiver.get_last_button_press() == "Forward":
+                while self.__sensing_system.is_front_clear() and self.__remote_receiver.get_last_button_press() == "Forward":
                     status = self.__drive('f', "fast")
 
                     self.__map.update_map(self.__sensing_system.get_sensor_data())
                 
                     if not status:
-                        self.__remote_receiver.reset_last_key_press()
+                        self.__remote_receiver.reset_last_button_press()
 
-            elif self.__remote_receiver.get_last_key_press() == "Backward":
-                while self.__sensing_system.is_back_clear() and self.__remote_receiver.get_last_key_press() == "Backward":
+            elif self.__remote_receiver.get_last_button_press() == "Backward":
+                while self.__sensing_system.is_back_clear() and self.__remote_receiver.get_last_button_press() == "Backward":
                     status = self.__drive('b', "fast")
 
                     self.__map.update_map(self.__sensing_system.get_sensor_data())
 
                     if not status:
-                        self.__remote_receiver.reset_last_key_press()
+                        self.__remote_receiver.reset_last_button_press()
 
-            elif self.__remote_receiver.get_last_key_press() == "Left":
+            elif self.__remote_receiver.get_last_button_press() == "Left":
                 self.__turn('l')
-                self.__remote_receiver.reset_last_key_press()
+                self.__remote_receiver.reset_last_button_press()
 
-            elif self.__remote_receiver.get_last_key_press() == "Right":
+            elif self.__remote_receiver.get_last_button_press() == "Right":
                 self.__turn('r')
-                self.__remote_receiver.reset_last_key_press()
+                self.__remote_receiver.reset_last_button_press()
 
-            elif self.__remote_receiver.get_last_key_press() == "Left micro turn":
+            elif self.__remote_receiver.get_last_button_press() == "Left micro turn":
                 self.__drivetrain.micro_turn('l')
-                self.__remote_receiver.reset_last_key_press()
+                self.__remote_receiver.reset_last_button_press()
 
-            elif self.__remote_receiver.get_last_key_press() == "Right micro turn":
+            elif self.__remote_receiver.get_last_button_press() == "Right micro turn":
                 self.__drivetrain.micro_turn('r')
-                self.__remote_receiver.reset_last_key_press()
+                self.__remote_receiver.reset_last_button_press()
 
         self.__map.display_map()
         self.__drivetrain.toggle_power(False)
 
 
     # The robot drives around and explores the room
-    # Needs to be fixed
     def __explore(self):
         last_action = None
 
         if self.__sound_signals:
-            self.__buzzer.play_song("Explore")
+            self.__buzzer.play_song("Exploring")
 
         self.__drivetrain.toggle_power(True)
 
@@ -168,12 +198,11 @@ class Robot():
 
 
     # The robot drives around and explores the room until it finds an object it was searching for
-    # Needs to be fixed
     def __find_object(self, object):
         last_action = None
 
         if self.__sound_signals:
-            self.__buzzer.play_song("Explore")
+            self.__buzzer.play_song("Exploring")
 
         self.__drivetrain.toggle_power(True)
 
@@ -192,7 +221,6 @@ class Robot():
             elif action is None:
                 if self.__check_if_stuck():
                     break
-
 
         self.__drivetrain.toggle_power(False)
         self.__computer_vision.reset_last_detected_object()
@@ -278,6 +306,7 @@ class Robot():
 
         return True
 
+
     # old version (without bump detection)
     '''
     def __drive(self, direction, speed) -> bool:
@@ -337,10 +366,10 @@ class Robot():
         # Least visited clear direction or multiple clear directions that have been visited the same amount of times
         possible_directions = self.__get_least_visited_sides(self.__get_clear_sides())
 
-        if last_action == 'l':
+        if last_action == 'l' and 'r' in possible_directions:
             possible_directions.remove('r')
 
-        elif last_action == 'r':
+        elif last_action == 'r' and 'l' in possible_directions:
             possible_directions.remove('l')
 
 
@@ -399,6 +428,13 @@ class Robot():
                 least_visited_sides.append(direction)
 
         return least_visited_sides
+
+
+    def __terminate_background_processes(self):
+        self.__remote_receiver.terminate_background_process()
+        self.__imu.terminate_background_process()
+        self.__computer_vision.terminate_background_process()
+        self.__sensing_system.terminate_background_process()
 
 
 if __name__ == "__main__":
