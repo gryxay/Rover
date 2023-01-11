@@ -4,7 +4,7 @@ class Buzzer_Constants:
     # "Name": (cycles, beeps per cycle, beep duration, time between cycles)
     SOUND_SIGNALS = {
         "Loading": (1, 1, 0.1, 0),
-        "Initialised": (1, 3, 0.1, 0),
+        "Ready": (1, 3, 0.1, 0),
         "Stuck": (1, 3, 1, 0),
         "Sensing System": (3, 1, 0.5, 2),
         "IMU": (3, 2, 0.5, 2),
@@ -293,31 +293,46 @@ class IMU_Constants:
 
 
 class IR_Receiver_Constants:
-    KEYBINDS = {
-        "61184": "Autonomous mode",
-        "61185": "Manual mode",
+    # Button keys
+    '''
+    61184, 61185, 
+    61186, 61187,
+    61188, 61189, 
+    61190, 61191, 
+    61192, 61193, 
+    61194, 61195, 
+    61196, 61197, 
+    61198, 61199, 
+    61200, 61201, 
+    61202, 61203, 
+    61204, 61205, 
+    61206, 61207
+    '''
+
+    MAIN_KEYBINDS = {
+        "61184": "Autonomous",
+        "61185": "Manual",
         "61186": "Stop",
         "61187": "Start",
+        "61191": "Clear the map",
+    }
+
+    AUTONOMOUS_MODE_KEYBINDS = {
         "61188": "Explore",
         "61189": "Find a bottle",
         "61190": "Return to home",
-        "61191": "Clear queue",
-        "61192": "Play a song",
-        "61193": "Unsigned",
-        "61194": "Unsigned",
-        "61195": "Clear the map",
+        "61195": "Clear queue",
+        "61192": "Play a song"
+    }
+
+    MANUAL_MODE_KEYBINDS = {
         "61196": "Left micro turn",
         "61197": "Forward",
         "61198": "Right micro turn",
-        "61199": "Unsigned",
         "61200": "Left",
         "61201": "Stop",
         "61202": "Right",
-        "61203": "Unsigned",
-        "61204": "Unsigned",
-        "61205": "Backward",
-        "61206": "Unsigned",
-        "61207": "Unsigned"
+        "61205": "Backward"
     }
 
 

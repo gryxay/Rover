@@ -1,4 +1,4 @@
-from multiprocessing import Process, Value
+from multiprocessing import Process, Event, Value
 from time import sleep
 
 from MPU6050 import MPU6050
@@ -8,25 +8,6 @@ from Constants import IMU_Constants
 
 
 class IMU:
-    __mpu = None
-    __buzzer = None
-
-    __x_accelerometer_offset = 0
-    __y_accelerometer_offset = 0
-    __z_accelerometer_offset = 0
-    __x_gyroscope_offset = 0
-    __y_gyroscope_offset = 0
-    __z_gyroscope_offset = 0
-
-    __roll = Value('f', 0)
-    __pitch = Value('f', 0)
-    __yaw = Value('f', 0)
-
-    __background_process = None
-
-    __debug = None
-
-
     def __init__(self, buzzer = None, auto_calibrate = False, debug = False):
         self.__buzzer = buzzer
 
@@ -35,25 +16,27 @@ class IMU:
         if auto_calibrate:
             self.__calibrate()
 
+        self.__mpu = MPU6050(IMU_Constants.I2C_BUS, IMU_Constants.DEVICE_ADDRESS, 0, 0, 0, 0, 0, 0)
+
+        if self.__debug:
+            print("IMU: Applying offsets")
 
         self.__apply_offsets()
 
         if self.__debug:
-            print("Initialising IMU:")
-        
-
-        self.__mpu = MPU6050(IMU_Constants.I2C_BUS, \
-                             IMU_Constants.DEVICE_ADDRESS, \
-                             self.__x_accelerometer_offset, \
-                             self.__y_accelerometer_offset, \
-                             self.__z_accelerometer_offset, \
-                             self.__x_gyroscope_offset, \
-                             self.__y_gyroscope_offset, \
-                             self.__z_gyroscope_offset, \
-                             self.__debug)
+            print("IMU: Initialising the DMP")
 
         self.__mpu.dmp_initialize()
         self.__mpu.set_DMP_enabled(True)
+
+        self.__roll = Value('f', 0)
+        self.__pitch = Value('f', 0)
+        self.__yaw = Value('f', 0)
+
+        self.__termination_event = Event()
+
+        if self.__debug:
+            print("IMU: Starting a background process")
 
         # Start a process, that constantly updates yaw data in the background
         self.__background_process = Process(target = self.__update_imu_data)
@@ -61,7 +44,7 @@ class IMU:
 
         # Wait for yaw data to stabilize
         if self.__debug:
-            print("Waiting for IMU to stabilise yaw value...")
+            print("IMU: Stabilising yaw value...")
         
         sleep(20)
 
@@ -77,7 +60,7 @@ class IMU:
 
     def __calibrate(self):
         if self.__debug:
-            print("Calibrating the IMU...")
+            print("IMU: Calibrating...")
 
 
         mpu = MPU6050(IMU_Constants.I2C_BUS, \
@@ -176,22 +159,6 @@ class IMU:
                 if acceleration_x_index == len(x_acceleration_average):
                     acceleration_x_index = 0
                     
-                    if self.__debug:
-                        print("x_acceleration_average_read: ", \
-                              str(self.__array_average(x_acceleration_average)), \
-                              " x_accelerometer_average_offset: ", \
-                              str(self.__array_average(x_accelerometer_offset_average)))
-
-                        print("y_acceleration_average_read: ", \
-                              str(self.__array_average(y_acceleration_average)), \
-                              " y_accelerometer_average_offset: ", \
-                              str(self.__array_average(y_accelerometer_offset_average)))
-
-                        print("z_acceleration_average_read: ", \
-                              str(self.__array_average(z_acceleration_average)), \
-                              " z_accelerometer_average_offset: ", \
-                              str(self.__array_average(z_accelerometer_offset_average)))
-                    
 
             if piday.check_time():
                 y_accelerometer_offset = piday.get_output_value(y_acceleration_reading)
@@ -235,25 +202,7 @@ class IMU:
                 if gyro_x_index == len(x_gyro_average):
                     gyro_x_index = 0
                     passthroughs += 1
-                    
-                    if self.__debug:
-                        print("x_average_read: ", \
-                              str(self.__array_average(x_gyro_average)), \
-                              " x_average_offset: ", \
-                              str(self.__array_average(x_gyroscope_offset_average)))
-
-                        print("y_average_read: ", \
-                              str(self.__array_average(y_gyro_average)), \
-                              " y_average_offset: ", \
-                              str(self.__array_average(y_gyroscope_offset_average)))
-
-                        print("z_average_read: ", \
-                              str(self.__array_average(z_gyro_average)), \
-                              " z_average_offset: ", \
-                              str(self.__array_average(z_gyroscope_offset_average)))
-
-                        print()
-    
+                        
 
             if pidgy.check_time():
                 y_gyroscope_offset = pidgy.get_output_value(y_gyro_reading)
@@ -313,12 +262,12 @@ class IMU:
         
         file.close()
 
-        self.__x_accelerometer_offset = int(round(float(file_data[0].strip())))
-        self.__y_accelerometer_offset = int(round(float(file_data[1].strip())))
-        self.__z_accelerometer_offset = int(round(float(file_data[2].strip())))
-        self.__x_gyroscope_offset = int(round(float(file_data[3].strip())))
-        self.__y_gyroscope_offset = int(round(float(file_data[4].strip())))
-        self.__z_gyroscope_offset = int(round(float(file_data[5].strip())))
+        self.__mpu.set_x_accel_offset(int(round(float(file_data[0].strip()))))
+        self.__mpu.set_y_accel_offset(int(round(float(file_data[1].strip()))))
+        self.__mpu.set_z_accel_offset(int(round(float(file_data[2].strip()))))
+        self.__mpu.set_x_gyro_offset(int(round(float(file_data[3].strip()))))
+        self.__mpu.set_y_gyro_offset(int(round(float(file_data[4].strip()))))
+        self.__mpu.set_z_gyro_offset(int(round(float(file_data[5].strip()))))
 
 
     def __update_imu_data(self):
@@ -329,42 +278,35 @@ class IMU:
         FIFO_buffer = [0]*64
         FIFO_count_list = list()
 
-        try:
-            while True:
-                FIFO_count = self.__mpu.get_FIFO_count()
-                mpu_int_status = self.__mpu.get_int_status()
+        while not self.__termination_event.is_set():
+            FIFO_count = self.__mpu.get_FIFO_count()
+            mpu_int_status = self.__mpu.get_int_status()
 
-                # If overflow is detected by status or fifo count we want to reset
-                if (FIFO_count == 1024) or (mpu_int_status & 0x10):
-                    self.__mpu.reset_FIFO()
+            # If overflow is detected by status or fifo count we want to reset
+            if (FIFO_count == 1024) or (mpu_int_status & 0x10):
+                self.__mpu.reset_FIFO()
 
-                # Check if fifo data is ready
-                elif (mpu_int_status & 0x02):
-                    while FIFO_count < packet_size:
-                        FIFO_count = self.__mpu.get_FIFO_count()
-                        
-                    FIFO_buffer = self.__mpu.get_FIFO_bytes(packet_size)
-                    acceleration = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
-                    quaternion = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
-                    gravity = self.__mpu.DMP_get_gravity(quaternion)
+            # Check if fifo data is ready
+            elif (mpu_int_status & 0x02):
+                while FIFO_count < packet_size:
+                    FIFO_count = self.__mpu.get_FIFO_count()
+                    
+                FIFO_buffer = self.__mpu.get_FIFO_bytes(packet_size)
+                acceleration = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
+                quaternion = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
+                gravity = self.__mpu.DMP_get_gravity(quaternion)
 
-                    with self.__roll.get_lock():
-                        self.__roll.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).x
-
-
-                    with self.__pitch.get_lock():
-                        self.__pitch.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).y
+                with self.__roll.get_lock():
+                    self.__roll.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).x
 
 
-                    with self.__yaw.get_lock():
-                        self.__yaw.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).z
+                with self.__pitch.get_lock():
+                    self.__pitch.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).y
 
-        except:
-            if self.__buzzer:
-                self.__buzzer.sound_signal("IMU")
 
-            exit(1)
-            
+                with self.__yaw.get_lock():
+                    self.__yaw.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).z
+        
 
     def get_roll_value(self):
         with self.__roll.get_lock():
@@ -379,3 +321,14 @@ class IMU:
     def get_yaw_value(self):
         with self.__yaw.get_lock():
             return self.__yaw.value
+
+
+    def terminate_background_process(self):
+        self.__termination_event.set()
+
+
+if __name__ == "__main__":
+    imu = IMU(debug = True)
+
+    while True:
+        print(imu.get_yaw_value())
