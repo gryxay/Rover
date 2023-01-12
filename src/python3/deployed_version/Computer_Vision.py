@@ -1,5 +1,6 @@
 from multiprocessing import Process, Event, Value
-import cv2
+from cv2 import VideoCapture, dnn, resize, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
+from time import sleep
 
 from Constants import Computer_Vision_Constants
 
@@ -11,12 +12,12 @@ class Computer_Vision:
         if self.__debug:
             print("Computer Vision: Initialising the camera")
 
-        self.__camera = cv2.VideoCapture(0)
-        self.__camera.set(cv2.CAP_PROP_FRAME_WIDTH, Computer_Vision_Constants.IMAGE_WIDTH)
-        self.__camera.set(cv2.CAP_PROP_FRAME_HEIGHT, Computer_Vision_Constants.IMAGE_HEIGHT)
-        self.__camera.set(cv2.CAP_PROP_FPS, Computer_Vision_Constants.MAX_FPS)
+        self.__camera = VideoCapture(0)
+        self.__camera.set(CAP_PROP_FRAME_WIDTH, Computer_Vision_Constants.IMAGE_WIDTH)
+        self.__camera.set(CAP_PROP_FRAME_HEIGHT, Computer_Vision_Constants.IMAGE_HEIGHT)
+        self.__camera.set(CAP_PROP_FPS, Computer_Vision_Constants.MAX_FPS)
         
-        self.__net = cv2.dnn.readNetFromCaffe(Computer_Vision_Constants.PROTOTXT_PATH, Computer_Vision_Constants.MODEL_PATH)
+        self.__net = dnn.readNetFromCaffe(Computer_Vision_Constants.PROTOTXT_PATH, Computer_Vision_Constants.MODEL_PATH)
 
         self.__last_detected_object = Value("i", Computer_Vision_Constants.CLASSES.index("unknown"))
 
@@ -35,7 +36,7 @@ class Computer_Vision:
             image_exists, image = self.__camera.read()
             
             if image_exists:
-                blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007, (300, 300), 130)
+                blob = dnn.blobFromImage(resize(image, (300, 300)), 0.007, (300, 300), 130)
 
                 self.__net.setInput(blob)
 
@@ -49,6 +50,8 @@ class Computer_Vision:
 
                         with self.__last_detected_object.get_lock():
                             self.__last_detected_object.value = class_index
+
+            sleep(Computer_Vision_Constants.LOOP_TIMEOUT)
 
 
     # Returns the last detected object

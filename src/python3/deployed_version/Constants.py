@@ -4,6 +4,7 @@ class Buzzer_Constants:
     # "Name": (cycles, beeps per cycle, beep duration, time between cycles)
     SOUND_SIGNALS = {
         "Loading": (1, 1, 0.1, 0),
+        "Canceling": (3, 2, 0.05, 0.1),
         "Ready": (1, 3, 0.1, 0),
         "Stuck": (1, 3, 1, 0),
         "Sensing System": (3, 1, 0.5, 2),
@@ -222,7 +223,8 @@ class Buzzer_Constants:
 class Computer_Vision_Constants:
     IMAGE_WIDTH = 640
     IMAGE_HEIGHT = 480
-    MAX_FPS = 30
+    MAX_FPS = 15
+    LOOP_TIMEOUT = 1 / MAX_FPS
 
     # Percentage of confidence needed to categorise an object
     MIN_CONFIDENCE = 0.75 # 1 = 100%;
@@ -247,7 +249,7 @@ class Distance_Sensor_Constants:
     HALF_SPEED_OF_SOUND = SPEED_OF_SOUND / 2
 
     # Values in seconds
-    DELAY = 0.01			
+    DELAY = 0.01		
     SIGNAL_LENGTH = 0.00001
     TIMEOUT = MAX_READING_DISTANCE / HALF_SPEED_OF_SOUND
 
@@ -278,10 +280,10 @@ class Drivetrain_Constants:
     STRICT_TURN_TURNING_ANGLE = 90
 
     LEFT_STRICT_TURN_FORWARD_OFFSET = 2
-    LEFT_STRICT_TURN_BACKWARD_OFFSET = 2.5
+    LEFT_STRICT_TURN_BACKWARD_OFFSET = 2
 
     RIGHT_STRICT_TURN_FORWARD_OFFSET = 1
-    RIGHT_STRICT_TURN_BACKWARD_OFFSET = 5
+    RIGHT_STRICT_TURN_BACKWARD_OFFSET = 2
 
 
 class IMU_Constants:
@@ -291,23 +293,37 @@ class IMU_Constants:
     CALIBRATION_PASSTHROUGHS = 3
     CALIBRATION_DATA_FILE = "calibration_values.txt"
 
+    DMP_INITIALIZATION_TIMEOUT = 20
+    LOOP_TIMEOUT = 0.001
+
 
 class IR_Receiver_Constants:
-    # Button keys
-    '''
-    61184, 61185, 
-    61186, 61187,
-    61188, 61189, 
-    61190, 61191, 
-    61192, 61193, 
-    61194, 61195, 
-    61196, 61197, 
-    61198, 61199, 
-    61200, 61201, 
-    61202, 61203, 
-    61204, 61205, 
-    61206, 61207
-    '''
+    BUTTON_KEYS = [
+        "61184", 
+        "61185", 
+        "61186", 
+        "61187",
+        "61188", 
+        "61189", 
+        "61190", 
+        "61191", 
+        "61192", 
+        "61193", 
+        "61194", 
+        "61195", 
+        "61196",
+        "61197", 
+        "61198",
+        "61199", 
+        "61200", 
+        "61201", 
+        "61202", 
+        "61203", 
+        "61204", 
+        "61205", 
+        "61206", 
+        "61207"
+    ]
 
     MAIN_KEYBINDS = {
         "61184": "Autonomous",
@@ -335,11 +351,18 @@ class IR_Receiver_Constants:
         "61205": "Backward"
     }
 
+    MAIN_KEYBINDS_BEEP_LENGTH = 0.3
+    AUTONOMOUS_MODE_KEYBINDS_BEEP_LENGTH = 0.1
+    MANUAL_MODE_KEYBINDS_BEEP_LENGTH = 0.1
+
+    LAST_BUTTON_PRESS_TIMEOUT = 0.5
+    LOOP_TIMEOUT = 0.1
+
 
 class Map_Constants:
     TILE_SIZE = 6
 
-    VISION_RANGE = 4
+    VISION_RANGE = 5
     OBSTACLE_CHECKING_RANGE = 7
     VISITED_TILES_CHECKING_RANGE = 5
 
@@ -350,6 +373,8 @@ class Robot_Constants:
 
     MINIMUM_COLLISION_DETECTION_ANGLE = 1
     COLLISION_CHECKING_FREQUENCY = round(Drivetrain_Constants.CM / 8)
+
+    LOOP_TIMEOUT = 0.1
 
 
 class Sensing_System_Constants:
@@ -368,8 +393,9 @@ class Sensing_System_Constants:
     # Values in cm
     MIN_FRONT_DISTANCE = 12
     MIN_BACK_DISTANCE = 16
-    MIN_LEFT_DISTANCE = 19
-    MIN_RIGHT_DISTANCE = 19
+    MIN_LEFT_DISTANCE = 16
+    MIN_RIGHT_DISTANCE = 16
+    SIDE_SENSOR_OFFSET = 3
 
 
 # Author: Geir Istad

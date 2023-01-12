@@ -22,26 +22,26 @@ from Constants import Map_Constants
 
 
 class Map:
-    __map = {}
-
-    # [-x, x, -y, y]
-    __bounds = [0, 0, 0, 0]
-
-    # N - North, E - East, S - South, W - West
-    __orientation = 'N'
-
-    # [x, y]
-    __starting_tile_position = [0, 0]
-    __current_tile_position = [0, 0]
-
-    # Stores tracked tile position and orientation where was the last searched object seen
-    __last_object_position = {
-        "x": None,
-        "y": None,
-        "orientation": None
-    }
-
     def __init__(self):
+        self.__map = {}
+
+        # [-x, x, -y, y]
+        self.__bounds = [0, 0, 0, 0]
+
+        # N - North, E - East, S - South, W - West
+        self.__orientation = 'N'
+
+        # [x, y]
+        self.__starting_tile_position = [0, 0]
+        self.__current_tile_position = [0, 0]
+
+        # Stores tracked tile position and orientation where was the last searched object seen
+        self.__last_object_position = {
+            "x": None,
+            "y": None,
+            "orientation": None
+        }
+
         self.__setup_starting_position()
 
 
@@ -96,6 +96,9 @@ class Map:
     def __get_neighbouring_tiles(self, tile) -> list:
         neighbours = []
 
+        if not tile:
+            return neighbours
+
         if str(tile.get_x_position()) + "," + str(tile.get_y_position() + 1) in self.__map:
             neighbours.append(self.__map[str(tile.get_x_position()) + "," + str(tile.get_y_position() + 1)])
 
@@ -115,7 +118,7 @@ class Map:
         neighbours = self.__get_neighbouring_tiles(tile)
 
         for i in range(len(neighbours)):
-            if neighbours[i].is_obstacle or neighbours[i].is_known:
+            if neighbours[i].is_obstacle or not neighbours[i].is_known:
                 continue
 
             elif neighbours[i].get_distance() is None or neighbours[i].get_distance() > n + 1:
@@ -131,8 +134,14 @@ class Map:
 
                 self.__calculate_distances(neighbours[i], n + 1)
 
-            if n == 0:
-                self.display_map()
+    
+    def __has_empty_neighbours(self, tile):
+        neighbours = self.__get_neighbouring_tiles(tile)
+        for neighbour in neighbours:
+            if neighbour.is_obstacle:
+                continue
+            return True
+        return False
 
 
     def __get_lowest_distance_neighbour(self, tile) -> Map_Tile:
@@ -140,13 +149,17 @@ class Map:
         lowest_distance = None
         lowest_distance_neighbour = None
 
-        for neighbour in neighbours:
-            if neighbour.is_obstacle or neighbour.is_known:
-                continue
+        if not neighbours:
+            return None
 
-            elif lowest_distance is None or neighbour.get_distance() < lowest_distance:
-                lowest_distance = neighbour.get_distance()
-                lowest_distance_neighbour = neighbour
+        for neighbour in neighbours:
+            if neighbour and neighbour.get_distance():
+                if neighbour.is_obstacle:
+                    continue
+
+                elif lowest_distance is None or neighbour.get_distance() < lowest_distance:
+                    lowest_distance = neighbour.get_distance()
+                    lowest_distance_neighbour = neighbour
 
         return lowest_distance_neighbour
 
@@ -1061,6 +1074,7 @@ class Map:
 
         start_tile = self.__map[str(self.__starting_tile_position[0]) + "," + str(self.__starting_tile_position[1])]
         end_tile = self.__map[str(self.get_current_x_position()) + "," + str(self.get_current_y_position())]
+        
         start_tile.set_distance(0)
         self.__calculate_distances(start_tile)
 
@@ -1070,11 +1084,26 @@ class Map:
         cur_tile = end_tile
 
         for i in range(cur_tile.get_distance()):
-            path.append(cur_tile)
+            if cur_tile:
+                path.append(cur_tile)
+
             cur_tile = self.__get_lowest_distance_neighbour(cur_tile)
 
-        return path[::-1]
+        if not path:
+            return None
 
+        path.append(self.__get_tile(0, 0))
+
+        return path
+
+
+    def remove_distances_from_tiles(self):
+        for y in range(self.__bounds[2], self.__bounds[3] + 1)[::-1]:
+            for x in range(self.__bounds[0], self.__bounds[1] + 1):
+                tile = self.__get_tile(x, y)
+
+                if tile:
+                    tile.set_distance(None)
 
 
     def set_last_object_location(self):

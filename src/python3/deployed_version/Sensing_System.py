@@ -1,5 +1,5 @@
 from multiprocessing import Process, Event, Value
-
+from time import sleep
 from Distance_Sensor import Distance_Sensor
 
 from Constants import Sensing_System_Constants
@@ -72,13 +72,13 @@ class Sensing_System:
     # Returns the distance in CM between the left sensor and the obstacle
     def get_left_sensor_distance(self) -> float:
         with self.__sensor_data['l'].get_lock():
-            return self.__sensor_data['l'].value
+            return self.__sensor_data['l'].value - Sensing_System_Constants.SIDE_SENSOR_OFFSET
 
 
     # Returns the distance in CM between the right sensor and the obstacle
     def get_right_sensor_distance(self) -> float:
         with self.__sensor_data['r'].get_lock():
-            return self.__sensor_data['r'].value
+            return self.__sensor_data['r'].value - Sensing_System_Constants.SIDE_SENSOR_OFFSET
 
     # Returns the distance in CM between distance sensors and the obstacles
     def get_sensor_data(self) -> dict:
@@ -111,3 +111,4 @@ class Sensing_System:
 
     def terminate_background_process(self):
         self.__termination_event.set()
+        
