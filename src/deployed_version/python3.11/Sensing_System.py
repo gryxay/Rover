@@ -4,6 +4,7 @@ from Distance_Sensor import Distance_Sensor
 
 from Constants import Sensing_System_Constants
 from Constants import Robot_Constants
+from Buzzer import Buzzer
 
 
 class Sensing_System:
@@ -48,13 +49,18 @@ class Sensing_System:
 
     # Reads data from Ultrasound Distance Sensors consecutively
     def __update_sensor_data(self):
-        while not self.__termination_event.is_set():
-            for direction in Robot_Constants.DIRECTIONS:
-                distance = self.__sensors[direction].get_distance()
+        try:
+            while not self.__termination_event.is_set():
+                for direction in Robot_Constants.DIRECTIONS:
+                    distance = self.__sensors[direction].get_distance()
 
-                if distance is not None:
-                    with self.__sensor_data[direction].get_lock():
-                        self.__sensor_data[direction].value = distance
+                    if distance is not None:
+                        with self.__sensor_data[direction].get_lock():
+                            self.__sensor_data[direction].value = distance
+        except:
+            self.__buzzer = Buzzer(debug = self.__debug)
+            self.__buzzer.sound_signal("Error")
+            sys.exit(1)
 
 
     # Returns the distance in CM between front distance sensor and the obstacle

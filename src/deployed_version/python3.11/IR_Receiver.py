@@ -3,6 +3,7 @@ from time import time, sleep
 import evdev
 
 from Constants import IR_Receiver_Constants
+from Buzzer import Buzzer
 
 
 class IR_Receiver:
@@ -71,8 +72,7 @@ class IR_Receiver:
             was_handled = True
 
         elif signal_key == self.__get_key("Stop", keybinds):
-            with self.__start_button_state.get_lock():
-                self.__start_button_state.value = 0
+            self.reset_start_button_state()
 
             was_handled = True
 
@@ -149,37 +149,42 @@ class IR_Receiver:
         last_button_press = None
         button_press_time = time()
 
-        while not self.__termination_event.is_set():
-            signal_key = self.__receiver.read_one()
+        try:
+            while not self.__termination_event.is_set():
+                signal_key = self.__receiver.read_one()
 
-            if signal_key:
-                signal_key = str(signal_key.value)
+                if signal_key:
+                    signal_key = str(signal_key.value)
 
-                if signal_key == last_button_press:
-                    continue    
+                    if signal_key == last_button_press:
+                        continue    
 
-                if signal_key in IR_Receiver_Constants.BUTTON_KEYS:
-                    if signal_key not in IR_Receiver_Constants.MANUAL_MODE_KEYBINDS:
-                        last_button_press = signal_key
+                    if signal_key in IR_Receiver_Constants.BUTTON_KEYS:
+                        if signal_key not in IR_Receiver_Constants.MANUAL_MODE_KEYBINDS:
+                            last_button_press = signal_key
 
-                # Main keybinds
-                if signal_key in IR_Receiver_Constants.MAIN_KEYBINDS:
+                    # Main keybinds
+                    if signal_key in IR_Receiver_Constants.MAIN_KEYBINDS:
     
-                   self.__main_keybind_handler(signal_key)
+                       self.__main_keybind_handler(signal_key)
 
-                # Autonomous mode keybinds
-                elif self.get_mode() == "Autonomous" and signal_key in IR_Receiver_Constants.AUTONOMOUS_MODE_KEYBINDS:
+                    # Autonomous mode keybinds
+                    elif self.get_mode() == "Autonomous" and signal_key in IR_Receiver_Constants.AUTONOMOUS_MODE_KEYBINDS:
                 
-                    self.__autonomous_mode_keybind_handler(signal_key)
+                        self.__autonomous_mode_keybind_handler(signal_key)
 
-                # Manual mode Keybinds
-                elif self.get_mode() == "Manual" and signal_key in IR_Receiver_Constants.MANUAL_MODE_KEYBINDS:
-                    if time() - button_press_time > IR_Receiver_Constants.LAST_BUTTON_PRESS_TIMEOUT:
-                        self.__manual_mode_keybind_handler(signal_key)
+                    # Manual mode Keybinds
+                    elif self.get_mode() == "Manual" and signal_key in IR_Receiver_Constants.MANUAL_MODE_KEYBINDS:
+                        if time() - button_press_time > IR_Receiver_Constants.LAST_BUTTON_PRESS_TIMEOUT:
+                            self.__manual_mode_keybind_handler(signal_key)
 
-                        button_press_time = time()
+                            button_press_time = time()
 
-            sleep(IR_Receiver_Constants.LOOP_TIMEOUT)
+                sleep(IR_Receiver_Constants.LOOP_TIMEOUT)
+        except:
+            self.__buzzer = Buzzer(debug = self.__debug)
+            self.__buzzer.sound_signal("Error")
+            sys.exit(1)
 
 
     # Returns True if start button is pressed
