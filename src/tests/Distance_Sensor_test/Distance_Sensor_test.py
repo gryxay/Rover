@@ -14,7 +14,7 @@ def distance_accuracy_test(distance_sensor) -> bool:
 
     print("Distance measured by the sensor: " + str(distance_sensor.get_distance()))
     
-    answer = input("Do the measured distcances correspond to each other? [y/n]")
+    answer = input("Do the measured distances correspond to each other? [y/n]")
           
     print("\n" + "------------------------------------------------------------------------------------" + "\n")
 
