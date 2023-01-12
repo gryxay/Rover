@@ -7,6 +7,7 @@ class Buzzer_Constants:
         "Canceling": (3, 2, 0.05, 0.1),
         "Ready": (1, 3, 0.1, 0),
         "Stuck": (1, 3, 1, 0),
+        "Error": (1, 1, 2, 0),
         "Sensing System": (3, 1, 0.5, 2),
         "IMU": (3, 2, 0.5, 2),
         "Computer Vision": (3, 3, 0.5, 2),
