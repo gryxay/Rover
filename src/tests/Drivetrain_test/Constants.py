@@ -1,54 +1,48 @@
-__author__ = 'Geir Istad'
+class Drivetrain_Constants:
+    LEFT_MOTOR_DIR_PIN = 16
+    LEFT_MOTOR_STEP_PIN = 20
+    RIGHT_MOTOR_DIR_PIN = 19
+    RIGHT_MOTOR_STEP_PIN = 26
+    SLEEP_PIN = 21
 
-'''
-MPU6050 Python I2C Class
-Copyright (c) 2015 Geir Istad
+    # Signal pulses Per Revolution
+    SPR = 800
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+    # Motor steps to move 1 cm
+    CM = 132
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+    # Time between signal pulses when driving
+    FAST_DRIVING_DELAY = 0.0001
+    SLOW_DRIVING_DELAY = 0.0005
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+    # Time between signal pulses when turning
+    TURNING_DELAY = 0.00075
 
+    MICRO_TURN_STEPS = 10
 
-Code based on I2Cdev library collection - MPU6050 I2C device class
-by Jeff Rowberg <jeff@rowberg.net>
-============================================
-I2Cdev device library code is placed under the MIT license
-Copyright (c) 2012 Jeff Rowberg
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-===============================================
-'''
+    # strict_turn() constants
+    STRICT_TURN_TURNING_ANGLE = 90
+
+    LEFT_STRICT_TURN_FORWARD_OFFSET = 2
+    LEFT_STRICT_TURN_BACKWARD_OFFSET = 2
+
+    RIGHT_STRICT_TURN_FORWARD_OFFSET = 1
+    RIGHT_STRICT_TURN_BACKWARD_OFFSET = 2
 
 
-class MPUConstants:
-    # From MPU6050.h
+class IMU_Constants:
+    I2C_BUS = 1
+    DEVICE_ADDRESS = 0x68
+
+    CALIBRATION_PASSTHROUGHS = 3
+    CALIBRATION_DATA_FILE = "calibration_values.txt"
+
+    DMP_INITIALIZATION_TIMEOUT = 20
+    LOOP_TIMEOUT = 0.001
+
+
+# Author: Geir Istad
+class MPU_Constants:
     MPU6050_ADDRESS_AD0_LOW = 0x68  # address pin low (GND), default
     MPU6050_ADDRESS_AD0_HIGH = 0x69  # address pin high (VCC)
     MPU6050_DEFAULT_ADDRESS = MPU6050_ADDRESS_AD0_LOW
@@ -419,7 +413,7 @@ class MPUConstants:
     MPU6050_DMP_CODE_SIZE = 1929  # dmpMemory[]
     MPU6050_DMP_CONFIG_SIZE = 192  # dmpConfig[]
     MPU6050_DMP_UPDATES_SIZE = 47  # dmpUpdates[]
-    '''
+    """
      * ================================================================================================ *
      | Default MotionApps v2.0 42-byte FIFO packet structure:                                           |
      |                                                                                                  |
@@ -429,7 +423,7 @@ class MPUConstants:
      | [GYRO Z][      ][ACC X ][      ][ACC Y ][      ][ACC Z ][      ][      ]                         |
      |  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41                          |
      * ================================================================================================ *
-     '''
+     """
     # dmpMemory has size MPU6050_DMP_CODE_SIZE = 1929
     dmpMemory = [
         # bank 0, 256 bytes
