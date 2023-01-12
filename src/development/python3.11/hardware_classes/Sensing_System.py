@@ -1,5 +1,6 @@
 from multiprocessing import Process, Event, Value
 from time import sleep
+from sys import exit as sys_exit
 from Distance_Sensor import Distance_Sensor
 
 from Constants import Sensing_System_Constants
@@ -15,9 +16,12 @@ class Sensing_System:
                        left_sensor_echo_pin = Sensing_System_Constants.LEFT_SENSOR_ECHO_PIN, \
                        right_sensor_trig_pin = Sensing_System_Constants.RIGHT_SENSOR_TRIG_PIN, \
                        right_sensor_echo_pin = Sensing_System_Constants.RIGHT_SENSOR_ECHO_PIN, \
-                       debug = False):
+                       buzzer = None, sound_signals = False, debug = False):
 
         self.__debug = debug
+        self.__sound_signals = sound_signals
+
+        self.__buzzer = buzzer
 
         if self.__debug:
             print("Sensing System: Initialising Distance Sensors")
@@ -48,13 +52,24 @@ class Sensing_System:
 
     # Reads data from Ultrasound Distance Sensors consecutively
     def __update_sensor_data(self):
-        while not self.__termination_event.is_set():
-            for direction in Robot_Constants.DIRECTIONS:
-                distance = self.__sensors[direction].get_distance()
+        try:
+            while not self.__termination_event.is_set():
+                for direction in Robot_Constants.DIRECTIONS:
+                    distance = self.__sensors[direction].get_distance()
 
-                if distance is not None:
-                    with self.__sensor_data[direction].get_lock():
-                        self.__sensor_data[direction].value = distance
+                    if distance is not None:
+                        with self.__sensor_data[direction].get_lock():
+                            self.__sensor_data[direction].value = distance
+
+        except:
+            if self.__debug:
+                print("Sensing System error!")
+
+            if self.__buzzer and self.__sound_signals:
+                self.__buzzer.sound_signal("Error")
+
+            sys_exit(1)
+
 
 
     # Returns the distance in CM between front distance sensor and the obstacle

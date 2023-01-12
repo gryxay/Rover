@@ -8,10 +8,11 @@ from Constants import IMU_Constants
 
 
 class IMU:
-    def __init__(self, buzzer = None, auto_calibrate = False, debug = False):
-        self.__buzzer = buzzer
-
+    def __init__(self, buzzer = None, auto_calibrate = False, sound_signals = False, debug = False):
         self.__debug = debug
+        self.__sound_signals = sound_signals
+
+        self.__buzzer = buzzer
 
         if auto_calibrate:
             self.__calibrate()
@@ -274,6 +275,9 @@ class IMU:
         self.terminate_background_process()
         self.__background_process = Process(target = self.__update_imu_data)
         self.__background_process.start()
+
+        if self.__buzzer and self.__sound_signals:
+            self.__buzzer.sound_signal("Error")
 
 
     def __update_imu_data(self):

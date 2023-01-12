@@ -1,13 +1,17 @@
 from multiprocessing import Process, Event, Value
 from cv2 import VideoCapture, dnn, resize, CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS
+from sys import exit as sys_exit
 from time import sleep
 
 from Constants import Computer_Vision_Constants
 
 
 class Computer_Vision:
-    def __init__(self, debug = False):
+    def __init__(self, buzzer = None, sound_signals = False, debug = False):
         self.__debug = debug
+        self.sound_signals = sound_signals
+
+        self.__buzzer = buzzer
 
         if self.__debug:
             print("Computer Vision: Initialising the camera")
@@ -32,26 +36,36 @@ class Computer_Vision:
 
     # Detects objects using the camera
     def __detect_objects(self):
-        while not self.__termination_event.is_set():
-            image_exists, image = self.__camera.read()
-            
-            if image_exists:
-                blob = dnn.blobFromImage(resize(image, (300, 300)), 0.007, (300, 300), 130)
+        try:
+            while not self.__termination_event.is_set():
+                image_exists, image = self.__camera.read()
+                
+                if image_exists:
+                    blob = dnn.blobFromImage(resize(image, (300, 300)), 0.007, (300, 300), 130)
 
-                self.__net.setInput(blob)
+                    self.__net.setInput(blob)
 
-                detected_objects = self.__net.forward()
+                    detected_objects = self.__net.forward()
 
-                for i in range(detected_objects.shape[2]):
-                    confidence = detected_objects[0][0][i][2]
+                    for i in range(detected_objects.shape[2]):
+                        confidence = detected_objects[0][0][i][2]
 
-                    if confidence > Computer_Vision_Constants.MIN_CONFIDENCE:
-                        class_index = int(detected_objects[0][0][i][1])
+                        if confidence > Computer_Vision_Constants.MIN_CONFIDENCE:
+                            class_index = int(detected_objects[0][0][i][1])
 
-                        with self.__last_detected_object.get_lock():
-                            self.__last_detected_object.value = class_index
+                            with self.__last_detected_object.get_lock():
+                                self.__last_detected_object.value = class_index
 
-            sleep(Computer_Vision_Constants.LOOP_TIMEOUT)
+                sleep(Computer_Vision_Constants.LOOP_TIMEOUT)
+
+        except:
+            if self.__debug:
+                print("Computer Vision error!")
+
+            if self.__buzzer and self.__sound_signals:
+                self.__buzzer.sound_signal("Error")
+
+            sys_exit(1)
 
 
     # Returns the last detected object
