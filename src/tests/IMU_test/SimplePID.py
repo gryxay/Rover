@@ -43,8 +43,17 @@ class SimplePID():
     __max_output = 0.0
     __PID_direction_direct = True
 
-    def __init__(self, a_set_point, a_min_output, a_max_output, a_kp, a_ki,
-                 a_kd, a_delta_time_ms=100, a_direction_direct=True):
+
+    def __init__(self, \
+                 a_set_point, \
+                 a_min_output, \
+                 a_max_output, \
+                 a_kp, \
+                 a_ki, \
+                 a_kd, \
+                 a_delta_time_ms = 100, \
+                 a_direction_direct = True):
+
         self.__last_time_ms = time.perf_counter()
         self.__set_point = a_set_point
         self.__min_output = a_min_output
@@ -56,48 +65,63 @@ class SimplePID():
         self.__PID_direction_direct = a_direction_direct
         self.__update_coeffs()
 
+
     def get_controller_direction(self):
         return self.__PID_direction_direct
+
 
     def set_controller_direction(self, a_direction_direct):
         self.__PID_direction_direct = a_direction_direct
         self.__update_coeffs()
 
+
     def get_delta_time_ms(self):
         return self.__delta_time
+
 
     def set_delta_time_ms(self, a_delta_time_ms):
         self.__delta_time_ms = a_delta_time_ms
         self.__update_coeffs()
 
+
     def get_kp(self):
         return self.__kp
+
 
     def get_ki(self):
         return self.__ki
 
+
     def get_kd(self):
         return self.__kd
+
 
     def set_kp(self, a_kp):
         self.__kp = a_kp
         self.__update_coeffs()
 
+
     def set_ki(self, a_ki):
         self.__ki = a_ki
         self.__update_coeffs()
+
 
     def set_kd(self, a_kd):
         self.__kd = a_kd
         self.__update_coeffs()
 
+
     def check_time(self):
-        current_time_ms = 1000*(time.perf_counter())
+        current_time_ms = 1000 * (time.perf_counter())
+        
         if current_time_ms - self.__last_time_ms > self.__delta_time_ms:
             self.__last_time_ms = current_time_ms
+
             return True
+
         else:
             return False
+
 
     def get_output_value(self, a_feedback_value):
         current_error = self.__set_point - a_feedback_value
@@ -109,6 +133,7 @@ class SimplePID():
 
         if output_value > self.__max_output:
             output_value = self.__max_output
+
         elif output_value < self.__min_output:
             output_value = self.__min_output
 
@@ -118,42 +143,54 @@ class SimplePID():
 
         return output_value
 
+
     def __update_coeffs(self):
         self.__update_coeff_a()
         self.__update_coeff_b()
         self.__update_coeff_c()
+
 
     def __update_coeff_a(self):
         if self.__PID_direction_direct is True:
             kp = float(self.__kp)
             ki = float(self.__ki)
             kd = float(self.__kd)
+
         else:
             kp = 0.0 - self.__kp
             ki = 0.0 - self.__ki
             kd = 0.0 - self.__kd
+
         factor_1 = kp
         factor_2 = ki * (self.__delta_time_ms / (1000.0 * 2.0))
         factor_3 = kd / (self.__delta_time_ms / 1000.0)
+
         self.__coeff_a = factor_1 + factor_2 + factor_3
+
 
     def __update_coeff_b(self):
         if self.__PID_direction_direct is True:
             kp = float(self.__kp)
             ki = float(self.__ki)
             kd = float(self.__kd)
+
         else:
             kp = 0.0 - self.__kp
             ki = 0.0 - self.__ki
             kd = 0.0 - self.__kd
+
         factor_1 = - kp
         factor_2 = ki * (self.__delta_time_ms / (1000.0 * 2.0))
         factor_3 = - ((2.0 * kd) / (self.__delta_time_ms / 1000.0))
+
         self.__coeff_b = factor_1 + factor_2 + factor_3
+
 
     def __update_coeff_c(self):
         if self.__PID_direction_direct is True:
             kd = self.__kd
+
         else:
             kd = 0.0 - self.__kd
+            
         self.__coeff_c = kd / (self.__delta_time_ms / 1000.0)
