@@ -110,7 +110,7 @@ class Drivetrain:
 	def turn(self, direction, degrees):
 		if self.__imu:
 			final_orientation = None
-			turning_offset = (degrees % 360.0) / 30
+			turning_offset = (degrees % 360.0) / Drivetrain_Constants.OFFSET
 			delay = self.get_delay("turning")
 
 			if direction == 'l':

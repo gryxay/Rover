@@ -268,6 +268,7 @@ class Drivetrain_Constants:
     # Motor steps to move 1 cm
     CM = 132
 
+
     # Time between signal pulses when driving
     FAST_DRIVING_DELAY = 0.0001
     SLOW_DRIVING_DELAY = 0.0005
@@ -276,6 +277,9 @@ class Drivetrain_Constants:
     TURNING_DELAY = 0.00075
 
     MICRO_TURN_STEPS = 10
+
+    # Degrees / OFFSET
+    OFFSET = 30
 
     # strict_turn() constants
     STRICT_TURN_TURNING_ANGLE = 90

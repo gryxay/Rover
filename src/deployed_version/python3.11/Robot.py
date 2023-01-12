@@ -40,7 +40,7 @@ class Robot():
         self.__boot_handler()
 
         try:
-            #self.__computer_vision = Computer_Vision(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+            self.__computer_vision = Computer_Vision(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
             self.__sensing_system = Sensing_System(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
             self.__imu = IMU(buzzer = self.__buzzer, sound_signals = self.__sound_signals, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
             self.__drivetrain = Drivetrain(imu = self.__imu, debug = self.__debug)
@@ -413,7 +413,7 @@ class Robot():
         if not least_visited_sides:
             return None
 
-        if consecutive_turns and len(consecutive_turns) > 3 and least_visited_sides:
+        if consecutive_turns and len(consecutive_turns) > 2 and least_visited_sides:
             if consecutive_turns[-1] == 'l' and 'r' in least_visited_sides:
                 least_visited_sides.remove('r')
 
