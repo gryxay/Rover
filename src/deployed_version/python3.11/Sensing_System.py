@@ -1,10 +1,10 @@
 from multiprocessing import Process, Event, Value
 from time import sleep
+from sys import exit as sys_exit
 from Distance_Sensor import Distance_Sensor
 
 from Constants import Sensing_System_Constants
 from Constants import Robot_Constants
-from Buzzer import Buzzer
 
 
 class Sensing_System:
@@ -16,9 +16,12 @@ class Sensing_System:
                        left_sensor_echo_pin = Sensing_System_Constants.LEFT_SENSOR_ECHO_PIN, \
                        right_sensor_trig_pin = Sensing_System_Constants.RIGHT_SENSOR_TRIG_PIN, \
                        right_sensor_echo_pin = Sensing_System_Constants.RIGHT_SENSOR_ECHO_PIN, \
-                       debug = False):
+                       buzzer = None, sound_signals = False, debug = False):
 
         self.__debug = debug
+        self.__sound_signals = sound_signals
+
+        self.__buzzer = buzzer
 
         if self.__debug:
             print("Sensing System: Initialising Distance Sensors")
@@ -57,10 +60,16 @@ class Sensing_System:
                     if distance is not None:
                         with self.__sensor_data[direction].get_lock():
                             self.__sensor_data[direction].value = distance
+
         except:
-            self.__buzzer = Buzzer(debug = self.__debug)
-            self.__buzzer.sound_signal("Error")
-            sys.exit(1)
+            if self.__debug:
+                print("Sensing System error!")
+
+            if self.__buzzer and self.__sound_signals:
+                self.__buzzer.sound_signal("Error")
+
+            sys_exit(1)
+
 
 
     # Returns the distance in CM between front distance sensor and the obstacle

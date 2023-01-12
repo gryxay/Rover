@@ -1,9 +1,9 @@
 from multiprocessing import Process, Event, Queue, Value
 from time import time, sleep
+from sys import exit as sys_exit
 import evdev
 
 from Constants import IR_Receiver_Constants
-from Buzzer import Buzzer
 
 
 class IR_Receiver:
@@ -165,12 +165,12 @@ class IR_Receiver:
 
                     # Main keybinds
                     if signal_key in IR_Receiver_Constants.MAIN_KEYBINDS:
-    
-                       self.__main_keybind_handler(signal_key)
+
+                        self.__main_keybind_handler(signal_key)
 
                     # Autonomous mode keybinds
                     elif self.get_mode() == "Autonomous" and signal_key in IR_Receiver_Constants.AUTONOMOUS_MODE_KEYBINDS:
-                
+                    
                         self.__autonomous_mode_keybind_handler(signal_key)
 
                     # Manual mode Keybinds
@@ -181,10 +181,12 @@ class IR_Receiver:
                             button_press_time = time()
 
                 sleep(IR_Receiver_Constants.LOOP_TIMEOUT)
+
         except:
-            self.__buzzer = Buzzer(debug = self.__debug)
-            self.__buzzer.sound_signal("Error")
-            sys.exit(1)
+            if self.__sound_signals:
+                self.__buzzer.sound_signal("Error")
+
+            sys_exit(1)
 
 
     # Returns True if start button is pressed

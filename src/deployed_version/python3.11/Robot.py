@@ -1,4 +1,5 @@
 from time import sleep
+from sys import exit as sys_exit
 import random
 
 from Drivetrain import Drivetrain
@@ -21,10 +22,17 @@ class Robot():
 
         try:
             self.__buzzer = Buzzer(debug = self.__debug)
+            self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+
         except:
             if self.__debug:
-                print("Failed to initialize buzzer")
-                sys.exit(1)
+                print("Robot: Failed to initialize one or more hardware components")
+
+            if self.__buzzer and sound_signals:
+                self.__buzzer.sound_signal("Error")
+
+            sys_exit(1)
+
 
         if sound_signals:
             self.__buzzer.sound_signal("Loading")
@@ -32,18 +40,22 @@ class Robot():
         self.__boot_handler()
 
         try:
-            self.__computer_vision = Computer_Vision(debug = self.__debug)
-            self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
-            self.__sensing_system = Sensing_System(debug = self.__debug)
-            self.__imu = IMU(buzzer = self.__buzzer, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
+            self.__computer_vision = Computer_Vision(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+            self.__sensing_system = Sensing_System(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+            self.__imu = IMU(buzzer = self.__buzzer, sound_signals = self.__sound_signals, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
             self.__drivetrain = Drivetrain(imu = self.__imu, debug = self.__debug)
-            self.__map = Map()
+
         except:
             if self.__debug:
-                print("Failed to initialize one or more hardware components")
+                print("Robot: Failed to initialize one or more hardware components")
+
             if sound_signals:
                 self.__buzzer.sound_signal("Error")
-                sys.exit(1)
+
+            sys_exit(1)
+
+
+        self.__map = Map()
 
         if sound_signals:
             self.__buzzer.sound_signal("Ready")
@@ -72,7 +84,7 @@ class Robot():
                 self.__remote_receiver.terminate_background_process()
 
                 if self.__sound_signals:
-                    self.__buzzer.sound_signal("Canceling")
+                    self.__buzzer.sound_signal("Cancelling")
 
                 if self.__debug:
                     print("Robot: Cancelling...")
@@ -636,6 +648,7 @@ class Robot():
     def __terminate_background_processes(self):
         for process in [self.__remote_receiver, self.__imu, self.__computer_vision, self.__sensing_system]:
             process.terminate_background_process()
+
 
 if __name__ == "__main__":
     robot = Robot(imu_auto_calibrate = False, sound_signals = True, debug = True)

@@ -4,7 +4,7 @@ class Buzzer_Constants:
     # "Name": (cycles, beeps per cycle, beep duration, time between cycles)
     SOUND_SIGNALS = {
         "Loading": (1, 1, 0.1, 0),
-        "Canceling": (3, 2, 0.05, 0.1),
+        "Cancelling": (3, 2, 0.05, 0.1),
         "Ready": (1, 3, 0.1, 0),
         "Stuck": (1, 3, 1, 0),
         "Error": (1, 1, 2, 0),
