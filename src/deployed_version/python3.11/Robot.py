@@ -40,7 +40,7 @@ class Robot():
         self.__boot_handler()
 
         try:
-            self.__computer_vision = Computer_Vision(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+            #self.__computer_vision = Computer_Vision(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
             self.__sensing_system = Sensing_System(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
             self.__imu = IMU(buzzer = self.__buzzer, sound_signals = self.__sound_signals, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
             self.__drivetrain = Drivetrain(imu = self.__imu, debug = self.__debug)
@@ -210,10 +210,12 @@ class Robot():
 
             if action == 'f' or action == 'b':
                 self.__drive(action, "fast")
+
                 consecutive_turns.clear()
 
             elif action == 'l' or action == 'r':
                 self.__turn(action)
+
                 consecutive_turns.append(action)
 
             elif action is None:
@@ -229,28 +231,27 @@ class Robot():
 
 
     # The robot drives around and explores the room until it finds an object it was searching for
-    def __find_object(self, object):
-        consecutive_turns = None
-
-        self.__drive(action, "fast")
+    def __find_object(self, object_to_find):
+        consecutive_turns = []
 
         if self.__sound_signals:
             self.__buzzer.play_song("Exploring")
 
         self.__drivetrain.toggle_power(True)
 
-        while self.__remote_receiver.is_start_button_pressed() and self.__computer_vision.get_last_detected_object() != object:
+        while self.__remote_receiver.is_start_button_pressed() and self.__computer_vision.get_last_detected_object() != object_to_find:
             self.__map.update_map(self.__sensing_system.get_sensor_data())
 
             action = self.__get_action(consecutive_turns)
-            last_action = action
 
             if action == 'f' or action == 'b':
                 self.__drive(action, "fast")
+
                 consecutive_turns.clear()
 
             elif action == 'l' or action == 'r':
                 self.__turn(action)
+
                 consecutive_turns.append(action)
 
             elif action is None:
@@ -260,10 +261,15 @@ class Robot():
                 consecutive_turns.clear()
 
         self.__drivetrain.toggle_power(False)
+
+        if self.__sound_signals and self.__computer_vision.get_last_detected_object() == object_to_find:
+            self.__buzzer.play_song("Found it!")
+
         self.__computer_vision.reset_last_detected_object()
+
         self.__map.set_last_object_location()
 
-        if self.__sound_signals:
+        if self.__sound_signals and self.__computer_vision.get_last_detected_object() == object_to_find:
             self.__buzzer.play_song("Found it!")
 
 
@@ -297,16 +303,6 @@ class Robot():
                 self.__map.remove_distances_from_tiles()
 
                 return
-        '''
-        if not self.__move_according_to_directions(directions):
-            if self.__sound_signals:
-                self.__buzzer.sound_signal("Stuck")
-
-                self.__map.remove_distances_from_tiles()
-
-                return
-
-        '''
             
         self.__turn_north()
 
@@ -414,7 +410,10 @@ class Robot():
         clear_sides = self.__get_clear_sides()
         least_visited_sides = self.__get_least_visited_sides(clear_sides)
 
-        if len(consecutive_turns) > 3 and least_visited_sides:
+        if not least_visited_sides:
+            return None
+
+        if consecutive_turns and len(consecutive_turns) > 3 and least_visited_sides:
             if consecutive_turns[-1] == 'l' and 'r' in least_visited_sides:
                 least_visited_sides.remove('r')
 

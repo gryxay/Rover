@@ -54,12 +54,12 @@ class Buzzer:
 			sleep(delay)
 
 
-	def sound_signal(self, error_source):
-		for _ in range(Buzzer_Constants.SOUND_SIGNALS[error_source][0]):
-			if error_source in Buzzer_Constants.SOUND_SIGNALS:
-				self.beep(Buzzer_Constants.SOUND_SIGNALS[error_source][1], Buzzer_Constants.SOUND_SIGNALS[error_source][2])
+	def sound_signal(self, signal_name):
+		for _ in range(Buzzer_Constants.SOUND_SIGNALS[signal_name][0]):
+			if signal_name in Buzzer_Constants.SOUND_SIGNALS:
+				self.beep(Buzzer_Constants.SOUND_SIGNALS[signal_name][1], Buzzer_Constants.SOUND_SIGNALS[signal_name][2])
 
-				sleep(Buzzer_Constants.SOUND_SIGNALS[error_source][3])
+				sleep(Buzzer_Constants.SOUND_SIGNALS[signal_name][3])
 
 	
 	def play_song(self, song_name):
