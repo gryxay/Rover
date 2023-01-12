@@ -46,7 +46,7 @@ class IMU:
         if self.__debug:
             print("IMU: Stabilising yaw value...")
         
-        sleep(20)
+        sleep(IMU_Constants.DMP_INITIALIZATION_TIMEOUT)
 
 
     def __array_average(self, array):
@@ -270,42 +270,54 @@ class IMU:
         self.__mpu.set_z_gyro_offset(int(round(float(file_data[5].strip()))))
 
 
+    def __handle_error(self):
+        self.terminate_background_process()
+        self.__background_process = Process(target = self.__update_imu_data)
+        self.__background_process.start()
+
+
     def __update_imu_data(self):
-        mpu_int_status = self.__mpu.get_int_status()
-        packet_size = self.__mpu.DMP_get_FIFO_packet_size()
-        FIFO_count = self.__mpu.get_FIFO_count()
-
-        FIFO_buffer = [0]*64
-        FIFO_count_list = list()
-
-        while not self.__termination_event.is_set():
-            FIFO_count = self.__mpu.get_FIFO_count()
+        try:
             mpu_int_status = self.__mpu.get_int_status()
+            packet_size = self.__mpu.DMP_get_FIFO_packet_size()
+            FIFO_count = self.__mpu.get_FIFO_count()
 
-            # If overflow is detected by status or fifo count we want to reset
-            if (FIFO_count == 1024) or (mpu_int_status & 0x10):
-                self.__mpu.reset_FIFO()
+            FIFO_buffer = [0]*64
+            FIFO_count_list = list()
 
-            # Check if fifo data is ready
-            elif (mpu_int_status & 0x02):
-                while FIFO_count < packet_size:
-                    FIFO_count = self.__mpu.get_FIFO_count()
-                    
-                FIFO_buffer = self.__mpu.get_FIFO_bytes(packet_size)
-                acceleration = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
-                quaternion = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
-                gravity = self.__mpu.DMP_get_gravity(quaternion)
+            last_yaw_read = 0
 
-                with self.__roll.get_lock():
-                    self.__roll.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).x
+            while not self.__termination_event.is_set():
+                FIFO_count = self.__mpu.get_FIFO_count()
+                mpu_int_status = self.__mpu.get_int_status()
+
+                # If overflow is detected by status or fifo count we want to reset
+                if (FIFO_count == 1024) or (mpu_int_status & 0x10):
+                    self.__mpu.reset_FIFO()
+
+                # Check if fifo data is ready
+                elif (mpu_int_status & 0x02):
+                    while FIFO_count < packet_size:
+                        FIFO_count = self.__mpu.get_FIFO_count()
+                        
+                    FIFO_buffer = self.__mpu.get_FIFO_bytes(packet_size)
+                    acceleration = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
+                    quaternion = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
+                    gravity = self.__mpu.DMP_get_gravity(quaternion)
+
+                    with self.__roll.get_lock():
+                        self.__roll.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).x
 
 
-                with self.__pitch.get_lock():
-                    self.__pitch.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).y
+                    with self.__pitch.get_lock():
+                        self.__pitch.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).y
 
 
-                with self.__yaw.get_lock():
-                    self.__yaw.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).z
+                    with self.__yaw.get_lock():
+                        self.__yaw.value = self.__mpu.DMP_get_euler_roll_pitch_yaw(quaternion, gravity).z
+
+        except:
+            self.__handle_error()
         
 
     def get_roll_value(self):
@@ -329,6 +341,7 @@ class IMU:
 
 if __name__ == "__main__":
     imu = IMU(debug = True)
-
+    '''
     while True:
         print(imu.get_yaw_value())
+    '''

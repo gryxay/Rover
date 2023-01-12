@@ -5,10 +5,6 @@ from Constants import Distance_Sensor_Constants
 
 
 class Distance_Sensor:
-	__trig_pin = None
-	__echo_pin = None
-	
-
 	def __init__(self, trig_pin, echo_pin):
 		self.__trig_pin = trig_pin
 		self.__echo_pin = echo_pin
