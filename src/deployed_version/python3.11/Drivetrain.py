@@ -84,7 +84,7 @@ class Drivetrain:
 		sleep(delay)
 
 
-	# Moves the robot a specified amount of cm
+	# Moves the robot a specified amount of CM
 	def drive(self, direction, distance_cm, speed):
 		delay = self.get_delay(speed)
 
@@ -105,8 +105,8 @@ class Drivetrain:
 			self.rotate_one_step(delay)
 
 
-	# Turns the robot to the specified direction certain amount of degrees.
-	# Works for turns up to 360 degrees.
+	# Turns the robot to the specified direction certain amount of degrees
+	# Works for turns up to 360 degrees
 	def turn(self, direction, degrees):
 		if self.__imu:
 			final_orientation = None
@@ -150,8 +150,8 @@ class Drivetrain:
 			self.drive('b', Drivetrain_Constants.RIGHT_STRICT_TURN_BACKWARD_OFFSET, "slow")
 
 
-	# Turns motors and their controllers ON/OFF.
-	# Helps saving battery life.
+	# Turns motors and their controllers ON/OFF
+	# Saves battery life
 	def toggle_power(self, is_on):
 		GPIO.output(self.__sleep_pin, is_on)
 		
