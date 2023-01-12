@@ -19,19 +19,31 @@ class Robot():
         self.__sound_signals = sound_signals
         self.__debug = debug
 
-        self.__buzzer = Buzzer(debug = self.__debug)
-        self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+        try:
+            self.__buzzer = Buzzer(debug = self.__debug)
+        except:
+            if self.__debug:
+                print("Failed to initialize buzzer")
+                sys.exit(1)
 
         if sound_signals:
             self.__buzzer.sound_signal("Loading")
 
         self.__boot_handler()
 
-        #self.__computer_vision = Computer_Vision(debug = self.__debug)
-        self.__sensing_system = Sensing_System(debug = self.__debug)
-        self.__imu = IMU(buzzer = self.__buzzer, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
-        self.__drivetrain = Drivetrain(imu = self.__imu, debug = self.__debug)
-        self.__map = Map()
+        try:
+            self.__computer_vision = Computer_Vision(debug = self.__debug)
+            self.__remote_receiver = IR_Receiver(buzzer = self.__buzzer, sound_signals = self.__sound_signals, debug = self.__debug)
+            self.__sensing_system = Sensing_System(debug = self.__debug)
+            self.__imu = IMU(buzzer = self.__buzzer, auto_calibrate = imu_auto_calibrate, debug = self.__debug)
+            self.__drivetrain = Drivetrain(imu = self.__imu, debug = self.__debug)
+            self.__map = Map()
+        except:
+            if self.__debug:
+                print("Failed to initialize one or more hardware components")
+            if sound_signals:
+                self.__buzzer.sound_signal("Error")
+                sys.exit(1)
 
         if sound_signals:
             self.__buzzer.sound_signal("Ready")
@@ -63,7 +75,7 @@ class Robot():
                     self.__buzzer.sound_signal("Canceling")
 
                 if self.__debug:
-                    print("Robot: Canceling...")
+                    print("Robot: Cancelling...")
 
                 exit()
 
@@ -385,7 +397,7 @@ class Robot():
         return False
 
 
-    # Returns the action, that the robot should take
+    # Returns action that the robot should take
     def __get_action(self, consecutive_turns):
         clear_sides = self.__get_clear_sides()
         least_visited_sides = self.__get_least_visited_sides(clear_sides)
@@ -622,11 +634,8 @@ class Robot():
 
 
     def __terminate_background_processes(self):
-        self.__remote_receiver.terminate_background_process()
-        self.__imu.terminate_background_process()
-        self.__computer_vision.terminate_background_process()
-        self.__sensing_system.terminate_background_process()
-
+        for process in [self.__remote_receiver, self.__imu, self.__computer_vision, self.__sensing_system]:
+            process.terminate_background_process()
 
 if __name__ == "__main__":
     robot = Robot(imu_auto_calibrate = False, sound_signals = True, debug = True)
